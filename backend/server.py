@@ -587,12 +587,12 @@ async def delete_product(product_id: str):
 # Initialize sample data
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database with sample products"""
+    """Initialize database with sample products and admin user"""
     # Check if products exist
     product_count = await db.products.count_documents({})
     
     if product_count == 0:
-        # Sample products
+        # Sample products with RWF prices
         sample_products = [
             {
                 "name": "Premium Beef Ribeye",
@@ -661,6 +661,20 @@ async def startup_event():
         
         await db.products.insert_many(sample_products)
         print("Sample products inserted")
+    
+    # Create admin user if doesn't exist
+    admin_exists = await db.users.find_one({"email": "admin@freshcuts.rw"})
+    if not admin_exists:
+        admin_user = {
+            "email": "admin@freshcuts.rw",
+            "password": hash_password("Admin123!"),
+            "name": "Fresh Cuts Administrator",
+            "phone": "+250783654454",
+            "role": "admin",
+            "created_at": datetime.utcnow()
+        }
+        await db.users.insert_one(admin_user)
+        print("Admin user created: admin@freshcuts.rw / Admin123!")
 
 if __name__ == "__main__":
     import uvicorn
