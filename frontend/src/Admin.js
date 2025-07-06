@@ -151,7 +151,7 @@ const Admin = () => {
             <div className="activity-list">
               {payments.slice(0, 5).map(payment => (
                 <div key={payment._id} className="activity-item">
-                  <span className="activity-title">{payment.payment_method} - ${payment.amount?.toFixed(2)}</span>
+                  <span className="activity-title">{payment.payment_method} - RWF {payment.amount?.toLocaleString()}</span>
                   <span className={`activity-status ${payment.status}`}>{payment.status}</span>
                 </div>
               ))}
