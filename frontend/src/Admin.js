@@ -1296,6 +1296,44 @@ const Admin = () => {
     );
   };
 
+  const PaymentManagement = () => (
+    <div className="payment-management">
+      <h2>Payment Management</h2>
+      <div className="payments-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payments.map(payment => (
+              <tr key={payment._id}>
+                <td>{payment._id?.substring(0, 12)}...</td>
+                <td>RWF {payment.amount?.toLocaleString()}</td>
+                <td>{payment.payment_method}</td>
+                <td>
+                  <span className={`status ${payment.status}`}>
+                    {payment.status}
+                  </span>
+                </td>
+                <td>{new Date(payment.created_at).toLocaleDateString()}</td>
+                <td>
+                  <button className="view-btn">View Details</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -1310,6 +1348,8 @@ const Admin = () => {
         return <UserManagement />;
       case 'payments':
         return <PaymentManagement />;
+      case 'emails':
+        return <EmailManagement />;
       default:
         return <Dashboard />;
     }
