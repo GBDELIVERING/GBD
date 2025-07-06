@@ -212,10 +212,14 @@ const Admin = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [bulkUpdates, setBulkUpdates] = useState({});
     const [displaySettings, setDisplaySettings] = useState({
-      layout: 'grid',
+      layout: 'table',
       itemsPerPage: 12,
       sortBy: 'name'
     });
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [editableProducts, setEditableProducts] = useState([]);
+    const [imageFile, setImageFile] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [formData, setFormData] = useState({
       name: '',
       description: '',
@@ -246,8 +250,48 @@ const Admin = () => {
       { value: 'per_gram', label: 'Per Gram' }
     ];
 
+    useEffect(() => {
+      setEditableProducts(products.map(p => ({ ...p, isEditing: false })));
+    }, [products]);
+
+    const handleImageUpload = async (file) => {
+      if (!file) return null;
+      
+      setUploadingImage(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`${backendUrl}/api/admin/upload-image`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUploadingImage(false);
+          return data.image_url;
+        } else {
+          throw new Error('Upload failed');
+        }
+      } catch (error) {
+        setUploadingImage(false);
+        alert('Error uploading image: ' + error.message);
+        return null;
+      }
+    };
+
     const handleSubmit = async (e) => {
       e.preventDefault();
+      
+      let imageUrl = formData.image_url;
+      
+      // Upload image if file is selected
+      if (imageFile) {
+        imageUrl = await handleImageUpload(imageFile);
+        if (!imageUrl) return; // Upload failed
+      }
+      
       try {
         const url = editingProduct 
           ? `${backendUrl}/api/admin/products/${editingProduct._id}`
@@ -260,6 +304,7 @@ const Admin = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...formData,
+            image_url: imageUrl,
             price: parseFloat(formData.price),
             stock: parseInt(formData.stock),
             weight: parseFloat(formData.weight),
@@ -273,6 +318,7 @@ const Admin = () => {
           alert(editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
           setShowAddModal(false);
           setEditingProduct(null);
+          setImageFile(null);
           resetForm();
           fetchProducts();
         }
@@ -281,33 +327,58 @@ const Admin = () => {
       }
     };
 
-    const handleBulkEdit = async () => {
-      if (selectedProducts.length === 0) {
-        alert('Please select products to update');
+    const handleTableBulkUpdate = async () => {
+      const updates = editableProducts
+        .filter(product => product.isEditing)
+        .map(product => {
+          const { isEditing, ...productData } = product;
+          return productData;
+        });
+
+      if (updates.length === 0) {
+        alert('No products selected for update');
         return;
       }
 
       try {
-        const response = await fetch(`${backendUrl}/api/admin/products/bulk`, {
+        const response = await fetch(`${backendUrl}/api/admin/products/bulk-table`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            product_ids: selectedProducts,
-            updates: bulkUpdates
-          })
+          body: JSON.stringify({ updates })
         });
 
         if (response.ok) {
           const data = await response.json();
-          alert(`${data.modified_count} products updated successfully!`);
-          setShowBulkEditModal(false);
-          setSelectedProducts([]);
-          setBulkUpdates({});
+          alert(`Bulk update completed! ${data.updated_count} products updated.`);
+          if (data.errors.length > 0) {
+            console.log('Errors:', data.errors);
+          }
           fetchProducts();
+          setEditableProducts(prev => prev.map(p => ({ ...p, isEditing: false })));
         }
       } catch (error) {
         alert('Error updating products');
       }
+    };
+
+    const toggleProductEdit = (productId) => {
+      setEditableProducts(prev => 
+        prev.map(product => 
+          product._id === productId 
+            ? { ...product, isEditing: !product.isEditing }
+            : product
+        )
+      );
+    };
+
+    const updateProductField = (productId, field, value) => {
+      setEditableProducts(prev =>
+        prev.map(product =>
+          product._id === productId
+            ? { ...product, [field]: value }
+            : product
+        )
+      );
     };
 
     const resetForm = () => {
@@ -354,156 +425,187 @@ const Admin = () => {
       }
     };
 
-    const handleProductSelect = (productId) => {
-      setSelectedProducts(prev => 
-        prev.includes(productId) 
-          ? prev.filter(id => id !== productId)
-          : [...prev, productId]
-      );
-    };
-
-    const filteredProducts = products
-      .sort((a, b) => {
-        switch (displaySettings.sortBy) {
-          case 'price': return a.price - b.price;
-          case 'stock': return a.stock - b.stock;
-          case 'name': 
-          default: return a.name.localeCompare(b.name);
-        }
-      })
-      .slice(0, displaySettings.itemsPerPage);
-
     return (
       <div className="product-management">
         <div className="management-header">
-          <h2>Product Management</h2>
+          <h2>📦 Product Management</h2>
           <div className="management-actions">
             <button 
               className="add-btn"
               onClick={() => setShowAddModal(true)}
             >
-              Add New Product
+              ➕ Add New Product
             </button>
             <button 
               className="bulk-edit-btn"
-              onClick={() => setShowBulkEditModal(true)}
-              disabled={selectedProducts.length === 0}
+              onClick={handleTableBulkUpdate}
+              disabled={editableProducts.filter(p => p.isEditing).length === 0}
             >
-              Bulk Edit ({selectedProducts.length})
+              💾 Save Changes ({editableProducts.filter(p => p.isEditing).length})
             </button>
           </div>
         </div>
 
-        <div className="display-controls">
-          <div className="display-settings">
-            <label>
-              Layout:
-              <select
-                value={displaySettings.layout}
-                onChange={(e) => setDisplaySettings(prev => ({...prev, layout: e.target.value}))}
-              >
-                <option value="grid">Grid</option>
-                <option value="list">List</option>
-              </select>
-            </label>
-            
-            <label>
-              Sort by:
-              <select
-                value={displaySettings.sortBy}
-                onChange={(e) => setDisplaySettings(prev => ({...prev, sortBy: e.target.value}))}
-              >
-                <option value="name">Name</option>
-                <option value="price">Price</option>
-                <option value="stock">Stock</option>
-              </select>
-            </label>
-            
-            <label>
-              Items per page:
-              <select
-                value={displaySettings.itemsPerPage}
-                onChange={(e) => setDisplaySettings(prev => ({...prev, itemsPerPage: parseInt(e.target.value)}))}
-              >
-                <option value="12">12</option>
-                <option value="24">24</option>
-                <option value="48">48</option>
-              </select>
-            </label>
+        <div className="table-view">
+          <div className="table-container">
+            <table className="products-table">
+              <thead>
+                <tr>
+                  <th>Edit</th>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Price (RWF)</th>
+                  <th>Stock</th>
+                  <th>Unit</th>
+                  <th>Discount %</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editableProducts.map(product => (
+                  <tr key={product._id} className={product.isEditing ? 'editing-row' : ''}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={product.isEditing}
+                        onChange={() => toggleProductEdit(product._id)}
+                        className="edit-checkbox"
+                      />
+                    </td>
+                    <td>
+                      <img 
+                        src={product.image_url} 
+                        alt={product.name}
+                        className="product-table-image"
+                      />
+                    </td>
+                    <td>
+                      {product.isEditing ? (
+                        <input
+                          type="text"
+                          value={product.name}
+                          onChange={(e) => updateProductField(product._id, 'name', e.target.value)}
+                          className="table-input"
+                        />
+                      ) : (
+                        product.name
+                      )}
+                    </td>
+                    <td>
+                      {product.isEditing ? (
+                        <select
+                          value={product.category}
+                          onChange={(e) => updateProductField(product._id, 'category', e.target.value)}
+                          className="table-select"
+                        >
+                          {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        product.category.replace('_', ' ')
+                      )}
+                    </td>
+                    <td>
+                      {product.isEditing ? (
+                        <input
+                          type="number"
+                          value={product.price}
+                          onChange={(e) => updateProductField(product._id, 'price', parseFloat(e.target.value))}
+                          className="table-input"
+                        />
+                      ) : (
+                        product.price.toLocaleString()
+                      )}
+                    </td>
+                    <td>
+                      {product.isEditing ? (
+                        <input
+                          type="number"
+                          value={product.stock}
+                          onChange={(e) => updateProductField(product._id, 'stock', parseInt(e.target.value))}
+                          className="table-input"
+                        />
+                      ) : (
+                        product.stock
+                      )}
+                    </td>
+                    <td>{product.unit}</td>
+                    <td>
+                      {product.isEditing ? (
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={product.discount_percentage}
+                          onChange={(e) => updateProductField(product._id, 'discount_percentage', parseFloat(e.target.value))}
+                          className="table-input"
+                        />
+                      ) : (
+                        product.discount_percentage + '%'
+                      )}
+                    </td>
+                    <td>
+                      <span className={`status-badge ${product.is_special_offer ? 'special' : 'normal'}`}>
+                        {product.is_special_offer ? '🏷️ Special' : '📦 Normal'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="table-actions">
+                        <button onClick={() => handleEdit(product)} className="edit-btn">
+                          ✏️
+                        </button>
+                        <button onClick={() => handleDelete(product._id)} className="delete-btn">
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        <div className={`products-${displaySettings.layout}`}>
-          {filteredProducts.map(product => (
-            <div key={product._id} className={`product-${displaySettings.layout === 'grid' ? 'card' : 'row'}`}>
-              <div className="product-select">
-                <input
-                  type="checkbox"
-                  checked={selectedProducts.includes(product._id)}
-                  onChange={() => handleProductSelect(product._id)}
-                />
-              </div>
-              
-              {displaySettings.layout === 'grid' ? (
-                <>
-                  <img src={product.image_url} alt={product.name} />
-                  <div className="product-info">
-                    <h3>{product.name}</h3>
-                    <p className="product-category">{product.category}</p>
-                    <p className="product-price">RWF {product.price.toLocaleString()}</p>
-                    <p className="product-stock">Stock: {product.stock}</p>
-                    {product.discount_percentage > 0 && (
-                      <p className="product-discount">🏷️ {product.discount_percentage}% OFF</p>
-                    )}
-                    <div className="product-actions">
-                      <button onClick={() => handleEdit(product)}>Edit</button>
-                      <button onClick={() => handleDelete(product._id)}>Delete</button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="product-row-content">
-                  <img src={product.image_url} alt={product.name} className="product-thumb" />
-                  <div className="product-details">
-                    <h3>{product.name}</h3>
-                    <span className="category">{product.category}</span>
-                    <span className="price">RWF {product.price.toLocaleString()}</span>
-                    <span className="stock">Stock: {product.stock}</span>
-                    {product.discount_percentage > 0 && (
-                      <span className="discount">🏷️ {product.discount_percentage}% OFF</span>
-                    )}
-                  </div>
-                  <div className="product-actions">
-                    <button onClick={() => handleEdit(product)}>Edit</button>
-                    <button onClick={() => handleDelete(product._id)}>Delete</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
         </div>
 
         {/* Add/Edit Product Modal */}
         {showAddModal && (
           <div className="modal-overlay">
-            <div className="modal">
+            <div className="modal large-modal">
               <div className="modal-header">
-                <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
+                <h3>{editingProduct ? '✏️ Edit Product' : '➕ Add New Product'}</h3>
                 <button onClick={() => {
                   setShowAddModal(false);
                   setEditingProduct(null);
+                  setImageFile(null);
                   resetForm();
                 }}>×</button>
               </div>
               <form onSubmit={handleSubmit} className="product-form">
-                <div className="form-group">
-                  <label>Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    required
-                  />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Product Name</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -539,19 +641,6 @@ const Admin = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Category</label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      required
-                    >
-                      <option value="">Select Category</option>
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
                     <label>Unit</label>
                     <input
                       type="text"
@@ -560,9 +649,6 @@ const Admin = () => {
                       required
                     />
                   </div>
-                </div>
-
-                <div className="form-row">
                   <div className="form-group">
                     <label>Price Per Unit</label>
                     <select
@@ -573,16 +659,6 @@ const Admin = () => {
                         <option key={unit.value} value={unit.value}>{unit.label}</option>
                       ))}
                     </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Discount (%)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={formData.discount_percentage}
-                      onChange={(e) => setFormData({...formData, discount_percentage: e.target.value})}
-                    />
                   </div>
                 </div>
 
@@ -607,135 +683,54 @@ const Admin = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Image URL</label>
+                  <label>Discount Percentage</label>
                   <input
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.discount_percentage}
+                    onChange={(e) => setFormData({...formData, discount_percentage: e.target.value})}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label>Weight</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.weight}
-                    onChange={(e) => setFormData({...formData, weight: e.target.value})}
-                  />
+                  <label>🖼️ Product Image</label>
+                  <div className="image-upload-section">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setImageFile(e.target.files[0])}
+                      className="file-input"
+                    />
+                    {imageFile && (
+                      <div className="image-preview">
+                        <img 
+                          src={URL.createObjectURL(imageFile)} 
+                          alt="Preview" 
+                          className="preview-image"
+                        />
+                        <p>Selected: {imageFile.name}</p>
+                      </div>
+                    )}
+                    {formData.image_url && !imageFile && (
+                      <div className="current-image">
+                        <img src={formData.image_url} alt="Current" className="preview-image" />
+                        <p>Current image</p>
+                      </div>
+                    )}
+                    <p className="help-text">📁 Upload from your computer, phone, or any drive</p>
+                  </div>
                 </div>
 
                 <div className="form-actions">
-                  <button type="submit" className="submit-btn">
-                    {editingProduct ? 'Update Product' : 'Add Product'}
+                  <button type="submit" className="submit-btn" disabled={uploadingImage}>
+                    {uploadingImage ? '⏳ Uploading...' : (editingProduct ? '💾 Update Product' : '➕ Add Product')}
                   </button>
                   <button type="button" onClick={() => setShowAddModal(false)}>
                     Cancel
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        )}
-
-        {/* Bulk Edit Modal */}
-        {showBulkEditModal && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <div className="modal-header">
-                <h3>Bulk Edit Products ({selectedProducts.length} selected)</h3>
-                <button onClick={() => setShowBulkEditModal(false)}>×</button>
-              </div>
-              <div className="bulk-edit-form">
-                <p>Update the following fields for all selected products:</p>
-                
-                <div className="form-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setBulkUpdates(prev => ({...prev, discount_percentage: 0}));
-                        } else {
-                          const {discount_percentage, ...rest} = bulkUpdates;
-                          setBulkUpdates(rest);
-                        }
-                      }}
-                    />
-                    Update Discount Percentage
-                  </label>
-                  {bulkUpdates.hasOwnProperty('discount_percentage') && (
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      placeholder="Discount %"
-                      onChange={(e) => setBulkUpdates(prev => ({...prev, discount_percentage: parseFloat(e.target.value)}))}
-                    />
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setBulkUpdates(prev => ({...prev, category: ''}));
-                        } else {
-                          const {category, ...rest} = bulkUpdates;
-                          setBulkUpdates(rest);
-                        }
-                      }}
-                    />
-                    Update Category
-                  </label>
-                  {bulkUpdates.hasOwnProperty('category') && (
-                    <select
-                      onChange={(e) => setBulkUpdates(prev => ({...prev, category: e.target.value}))}
-                    >
-                      <option value="">Select Category</option>
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setBulkUpdates(prev => ({...prev, is_special_offer: false}));
-                        } else {
-                          const {is_special_offer, ...rest} = bulkUpdates;
-                          setBulkUpdates(rest);
-                        }
-                      }}
-                    />
-                    Update Special Offer Status
-                  </label>
-                  {bulkUpdates.hasOwnProperty('is_special_offer') && (
-                    <select
-                      onChange={(e) => setBulkUpdates(prev => ({...prev, is_special_offer: e.target.value === 'true'}))}
-                    >
-                      <option value="false">Not Special Offer</option>
-                      <option value="true">Special Offer</option>
-                    </select>
-                  )}
-                </div>
-
-                <div className="form-actions">
-                  <button onClick={handleBulkEdit} className="submit-btn">
-                    Update Selected Products
-                  </button>
-                  <button onClick={() => setShowBulkEditModal(false)}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         )}
