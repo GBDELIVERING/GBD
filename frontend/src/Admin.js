@@ -1934,6 +1934,347 @@ const Admin = () => {
     );
   };
 
+  const FrontendThemeCustomization = () => {
+    const [themeSettings, setThemeSettings] = useState({
+      primaryColor: '#3b82f6',
+      secondaryColor: '#1e40af',
+      accentColor: '#f59e0b',
+      backgroundColor: '#f8fafc',
+      textColor: '#1e293b',
+      borderRadius: '8',
+      spacing: 'normal',
+      fontFamily: 'Inter',
+      tableRowHeight: 'normal',
+      hoverEffect: 'enabled',
+      animationSpeed: 'normal'
+    });
+
+    const [customCSS, setCustomCSS] = useState('');
+    const [livePreview, setLivePreview] = useState(false);
+
+    const spacingOptions = [
+      { value: 'compact', label: 'Compact (Less Spacing)' },
+      { value: 'normal', label: 'Normal (Default)' },
+      { value: 'comfortable', label: 'Comfortable (More Spacing)' },
+      { value: 'spacious', label: 'Spacious (Maximum Spacing)' }
+    ];
+
+    const fontOptions = [
+      { value: 'Inter', label: 'Inter (Modern Sans-serif)' },
+      { value: 'Roboto', label: 'Roboto (Google Font)' },
+      { value: 'Open Sans', label: 'Open Sans (Clean)' },
+      { value: 'Poppins', label: 'Poppins (Rounded)' },
+      { value: 'Montserrat', label: 'Montserrat (Elegant)' }
+    ];
+
+    const rowHeightOptions = [
+      { value: 'compact', label: 'Compact (40px)' },
+      { value: 'normal', label: 'Normal (60px)' },
+      { value: 'comfortable', label: 'Comfortable (80px)' },
+      { value: 'spacious', label: 'Spacious (100px)' }
+    ];
+
+    const handleThemeUpdate = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/frontend-theme`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...themeSettings,
+            customCSS,
+            updatedAt: new Date()
+          })
+        });
+
+        if (response.ok) {
+          alert('Theme settings updated successfully!');
+          if (livePreview) {
+            applyThemePreview();
+          }
+        }
+      } catch (error) {
+        alert('Error updating theme settings');
+      }
+    };
+
+    const applyThemePreview = () => {
+      const root = document.documentElement;
+      root.style.setProperty('--primary-color', themeSettings.primaryColor);
+      root.style.setProperty('--secondary-color', themeSettings.secondaryColor);
+      root.style.setProperty('--accent-color', themeSettings.accentColor);
+      root.style.setProperty('--bg-color', themeSettings.backgroundColor);
+      root.style.setProperty('--text-color', themeSettings.textColor);
+      root.style.setProperty('--border-radius', themeSettings.borderRadius + 'px');
+    };
+
+    const resetTheme = () => {
+      setThemeSettings({
+        primaryColor: '#3b82f6',
+        secondaryColor: '#1e40af',
+        accentColor: '#f59e0b',
+        backgroundColor: '#f8fafc',
+        textColor: '#1e293b',
+        borderRadius: '8',
+        spacing: 'normal',
+        fontFamily: 'Inter',
+        tableRowHeight: 'normal',
+        hoverEffect: 'enabled',
+        animationSpeed: 'normal'
+      });
+      setCustomCSS('');
+    };
+
+    return (
+      <div className="frontend-theme-customization">
+        <div className="customization-header">
+          <h2>🎨 Frontend Theme Customization</h2>
+          <div className="theme-actions">
+            <label className="preview-toggle">
+              <input
+                type="checkbox"
+                checked={livePreview}
+                onChange={(e) => setLivePreview(e.target.checked)}
+              />
+              Live Preview
+            </label>
+            <button onClick={resetTheme} className="reset-btn">
+              🔄 Reset to Default
+            </button>
+            <button onClick={handleThemeUpdate} className="update-btn">
+              💾 Save Theme
+            </button>
+          </div>
+        </div>
+
+        <div className="theme-settings-grid">
+          {/* Color Settings */}
+          <div className="settings-section">
+            <h3>🎨 Color Scheme</h3>
+            <div className="color-settings">
+              <div className="color-group">
+                <label>Primary Color</label>
+                <div className="color-input-group">
+                  <input
+                    type="color"
+                    value={themeSettings.primaryColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, primaryColor: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    value={themeSettings.primaryColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, primaryColor: e.target.value})}
+                    className="color-text-input"
+                  />
+                </div>
+              </div>
+
+              <div className="color-group">
+                <label>Secondary Color</label>
+                <div className="color-input-group">
+                  <input
+                    type="color"
+                    value={themeSettings.secondaryColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, secondaryColor: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    value={themeSettings.secondaryColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, secondaryColor: e.target.value})}
+                    className="color-text-input"
+                  />
+                </div>
+              </div>
+
+              <div className="color-group">
+                <label>Accent Color</label>
+                <div className="color-input-group">
+                  <input
+                    type="color"
+                    value={themeSettings.accentColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, accentColor: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    value={themeSettings.accentColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, accentColor: e.target.value})}
+                    className="color-text-input"
+                  />
+                </div>
+              </div>
+
+              <div className="color-group">
+                <label>Background Color</label>
+                <div className="color-input-group">
+                  <input
+                    type="color"
+                    value={themeSettings.backgroundColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, backgroundColor: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    value={themeSettings.backgroundColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, backgroundColor: e.target.value})}
+                    className="color-text-input"
+                  />
+                </div>
+              </div>
+
+              <div className="color-group">
+                <label>Text Color</label>
+                <div className="color-input-group">
+                  <input
+                    type="color"
+                    value={themeSettings.textColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, textColor: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    value={themeSettings.textColor}
+                    onChange={(e) => setThemeSettings({...themeSettings, textColor: e.target.value})}
+                    className="color-text-input"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Layout Settings */}
+          <div className="settings-section">
+            <h3>📐 Layout & Spacing</h3>
+            <div className="layout-settings">
+              <div className="setting-group">
+                <label>Border Radius (px)</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  value={themeSettings.borderRadius}
+                  onChange={(e) => setThemeSettings({...themeSettings, borderRadius: e.target.value})}
+                />
+                <span className="range-value">{themeSettings.borderRadius}px</span>
+              </div>
+
+              <div className="setting-group">
+                <label>Overall Spacing</label>
+                <select
+                  value={themeSettings.spacing}
+                  onChange={(e) => setThemeSettings({...themeSettings, spacing: e.target.value})}
+                >
+                  {spacingOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="setting-group">
+                <label>Table Row Height</label>
+                <select
+                  value={themeSettings.tableRowHeight}
+                  onChange={(e) => setThemeSettings({...themeSettings, tableRowHeight: e.target.value})}
+                >
+                  {rowHeightOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="setting-group">
+                <label>Font Family</label>
+                <select
+                  value={themeSettings.fontFamily}
+                  onChange={(e) => setThemeSettings({...themeSettings, fontFamily: e.target.value})}
+                >
+                  {fontOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Animation & Effects */}
+          <div className="settings-section">
+            <h3>✨ Animation & Effects</h3>
+            <div className="effects-settings">
+              <div className="setting-group">
+                <label>Hover Effects</label>
+                <select
+                  value={themeSettings.hoverEffect}
+                  onChange={(e) => setThemeSettings({...themeSettings, hoverEffect: e.target.value})}
+                >
+                  <option value="disabled">Disabled</option>
+                  <option value="subtle">Subtle</option>
+                  <option value="enabled">Normal</option>
+                  <option value="enhanced">Enhanced</option>
+                </select>
+              </div>
+
+              <div className="setting-group">
+                <label>Animation Speed</label>
+                <select
+                  value={themeSettings.animationSpeed}
+                  onChange={(e) => setThemeSettings({...themeSettings, animationSpeed: e.target.value})}
+                >
+                  <option value="slow">Slow (0.5s)</option>
+                  <option value="normal">Normal (0.3s)</option>
+                  <option value="fast">Fast (0.15s)</option>
+                  <option value="instant">Instant (0s)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Custom CSS Editor */}
+        <div className="custom-css-section">
+          <h3>💻 Custom CSS</h3>
+          <p className="help-text">Add your custom CSS to override default styles. Changes will be applied instantly.</p>
+          <textarea
+            value={customCSS}
+            onChange={(e) => setCustomCSS(e.target.value)}
+            className="css-editor"
+            placeholder="/* Add your custom CSS here */
+.products-table {
+  /* Custom table styles */
+}
+
+.product-card:hover {
+  /* Custom hover effects */
+}"
+            rows="10"
+          />
+        </div>
+
+        {/* Theme Preview */}
+        <div className="theme-preview-section">
+          <h3>👀 Theme Preview</h3>
+          <div className="preview-container">
+            <div className="preview-table" style={{
+              '--primary': themeSettings.primaryColor,
+              '--secondary': themeSettings.secondaryColor,
+              '--accent': themeSettings.accentColor,
+              borderRadius: themeSettings.borderRadius + 'px',
+              fontFamily: themeSettings.fontFamily
+            }}>
+              <div className="preview-header" style={{background: themeSettings.primaryColor, color: 'white'}}>
+                Sample Table Header
+              </div>
+              <div className="preview-row" style={{
+                padding: themeSettings.spacing === 'compact' ? '8px' : 
+                        themeSettings.spacing === 'comfortable' ? '16px' : 
+                        themeSettings.spacing === 'spacious' ? '24px' : '12px'
+              }}>
+                <span>Sample Product Name</span>
+                <span style={{color: themeSettings.accentColor}}>RWF 5,000</span>
+                <span>In Stock</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
