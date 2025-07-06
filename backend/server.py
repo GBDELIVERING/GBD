@@ -1256,10 +1256,149 @@ async def get_email_campaigns():
     
     return {"campaigns": all_campaigns}
 
-# Initialize sample data
+# Delivery Fee Calculation Routes
+@app.post("/api/delivery/calculate-fee")
+async def calculate_delivery_fee(location: CustomerLocation, order_total: float):
+    """Calculate delivery fee based on customer location"""
+    
+    # Get delivery zones from database
+    zones = await db.delivery_zones.find({}).to_list(100)
+    
+    # Default delivery fee
+    delivery_fee = 2000.0  # Default RWF
+    zone_found = None
+    
+    # Find matching zone
+    for zone in zones:
+        if location.district.lower() in [area.lower() for area in zone.get('areas', [])]:
+            zone_found = zone
+            break
+    
+    if zone_found:
+        delivery_fee = zone_found['base_fee']
+        
+        # Check if order qualifies for free delivery
+        if zone_found.get('min_order_for_free') and order_total >= zone_found['min_order_for_free']:
+            delivery_fee = 0.0
+        
+        # Calculate distance-based fee if coordinates available
+        if location.latitude and location.longitude and zone_found.get('per_km_rate'):
+            # Simple distance calculation (you can integrate Google Maps API)
+            estimated_distance = 5.0  # Default 5km
+            distance_fee = estimated_distance * zone_found['per_km_rate']
+            delivery_fee += distance_fee
+    
+    return {
+        "delivery_fee": delivery_fee,
+        "zone": zone_found['name'] if zone_found else "Standard Zone",
+        "free_delivery_threshold": zone_found.get('min_order_for_free') if zone_found else None,
+        "estimated_time": "30-45 minutes"
+    }
+
+# Admin Delivery Zone Management
+@app.post("/api/admin/delivery-zones")
+async def create_delivery_zone(zone: DeliveryZone):
+    """Create delivery zone"""
+    zone_data = zone.dict()
+    zone_data["created_at"] = datetime.utcnow()
+    
+    result = await db.delivery_zones.insert_one(zone_data)
+    return {"message": "Delivery zone created", "zone_id": str(result.inserted_id)}
+
+@app.get("/api/admin/delivery-zones")
+async def get_delivery_zones():
+    """Get all delivery zones"""
+    zones = await db.delivery_zones.find({}).to_list(100)
+    for zone in zones:
+        zone["_id"] = str(zone["_id"])
+    return {"zones": zones}
+
+@app.put("/api/admin/delivery-zones/{zone_id}")
+async def update_delivery_zone(zone_id: str, zone: DeliveryZone):
+    """Update delivery zone"""
+    zone_data = zone.dict()
+    zone_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.delivery_zones.update_one(
+        {"_id": ObjectId(zone_id)},
+        {"$set": zone_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Zone not found")
+    
+    return {"message": "Delivery zone updated"}
+
+@app.delete("/api/admin/delivery-zones/{zone_id}")
+async def delete_delivery_zone(zone_id: str):
+    """Delete delivery zone"""
+    result = await db.delivery_zones.delete_one({"_id": ObjectId(zone_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Zone not found")
+    
+    return {"message": "Delivery zone deleted"}
+
+# E-commerce Settings Management
+@app.post("/api/admin/ecommerce-settings")
+async def update_ecommerce_settings(settings: EcommerceSettings):
+    """Update e-commerce settings"""
+    settings_data = settings.dict()
+    settings_data["updated_at"] = datetime.utcnow()
+    
+    await db.ecommerce_settings.update_one(
+        {"type": "main"},
+        {"$set": settings_data},
+        upsert=True
+    )
+    
+    return {"message": "E-commerce settings updated"}
+
+@app.get("/api/admin/ecommerce-settings")
+async def get_ecommerce_settings():
+    """Get e-commerce settings"""
+    settings = await db.ecommerce_settings.find_one({"type": "main"})
+    if not settings:
+        # Return default settings
+        default_settings = EcommerceSettings()
+        return default_settings.dict()
+    
+    settings.pop("_id", None)
+    settings.pop("type", None)
+    return settings
+
+@app.get("/api/public/ecommerce-settings")
+async def get_public_ecommerce_settings():
+    """Get public e-commerce settings for frontend"""
+    settings = await db.ecommerce_settings.find_one({"type": "main"})
+    if not settings:
+        default_settings = EcommerceSettings()
+        return default_settings.dict()
+    
+    # Remove sensitive data
+    public_settings = {
+        "store_name": settings.get("store_name", "Fresh Cuts Market"),
+        "store_tagline": settings.get("store_tagline", "Premium Quality Meats & Fresh Groceries"),
+        "primary_color": settings.get("primary_color", "#dc2626"),
+        "secondary_color": settings.get("secondary_color", "#991b1b"),
+        "currency": settings.get("currency", "RWF"),
+        "currency_symbol": settings.get("currency_symbol", "RWF"),
+        "enable_delivery": settings.get("enable_delivery", True),
+        "enable_pickup": settings.get("enable_pickup", True),
+        "checkout_fields": settings.get("checkout_fields", {
+            "require_phone": True,
+            "require_address": True,
+            "allow_notes": True
+        }),
+        "order_statuses": settings.get("order_statuses", ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"])
+    }
+    
+    return public_settings
+
+# Initialize delivery zones and settings
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database with sample products and admin user"""
+    """Initialize database with sample products, admin user, delivery zones and settings"""
     # Check if products exist
     product_count = await db.products.count_documents({})
     
@@ -1377,6 +1516,64 @@ async def startup_event():
         }
         await db.users.insert_one(admin_user)
         print("Admin user created: admin@freshcuts.rw / Admin123!")
+    
+    # Initialize delivery zones
+    zones_count = await db.delivery_zones.count_documents({})
+    if zones_count == 0:
+        sample_zones = [
+            {
+                "name": "Kigali City Center",
+                "areas": ["Nyarugenge", "Gasabo", "Kicukiro"],
+                "base_fee": 1500.0,
+                "per_km_rate": 300.0,
+                "min_order_for_free": 25000.0,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "name": "Kigali Suburbs",
+                "areas": ["Kimironko", "Remera", "Gikondo", "Nyamirambo"],
+                "base_fee": 2500.0,
+                "per_km_rate": 400.0,
+                "min_order_for_free": 30000.0,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "name": "Outside Kigali",
+                "areas": ["Muhanga", "Rwamagana", "Kayonza", "Bugesera"],
+                "base_fee": 5000.0,
+                "per_km_rate": 500.0,
+                "min_order_for_free": 50000.0,
+                "created_at": datetime.utcnow()
+            }
+        ]
+        
+        await db.delivery_zones.insert_many(sample_zones)
+        print("Sample delivery zones created")
+    
+    # Initialize default e-commerce settings
+    settings_exists = await db.ecommerce_settings.find_one({"type": "main"})
+    if not settings_exists:
+        default_settings = {
+            "type": "main",
+            "store_name": "German Butchery",
+            "store_tagline": "Premium Quality Meats & Fresh Groceries",
+            "primary_color": "#dc2626",
+            "secondary_color": "#991b1b",
+            "currency": "RWF",
+            "currency_symbol": "RWF",
+            "tax_rate": 0.0,
+            "enable_delivery": True,
+            "enable_pickup": True,
+            "checkout_fields": {
+                "require_phone": True,
+                "require_address": True,
+                "allow_notes": True
+            },
+            "order_statuses": ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"],
+            "created_at": datetime.utcnow()
+        }
+        await db.ecommerce_settings.insert_one(default_settings)
+        print("Default e-commerce settings created")
 
 if __name__ == "__main__":
     import uvicorn
