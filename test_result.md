@@ -597,6 +597,42 @@ frontend:
         agent: "main"
         comment: "Successfully implemented WhatsApp integration with order message generation, settings management, and formatted message templates. All APIs tested and working."
 
+  - task: "UX Builder - Visual Page Builder"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/Admin.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to implement visual drag-and-drop page builder with component library, live preview, and responsive design tools"
+
+  - task: "WordPress-like CMS Functions"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to implement WordPress-like content management including posts, pages, categories, tags, media library, and content editing"
+
+  - task: "WooCommerce-like E-commerce Functions"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to implement advanced e-commerce features like product variations, inventory management, coupon system, shipping zones, tax management"
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
