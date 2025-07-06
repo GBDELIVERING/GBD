@@ -1796,6 +1796,29 @@ const Admin = () => {
     );
   };
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'products':
+        return <ProductManagement />;
+      case 'offers':
+        return <SpecialOffersManagement />;
+      case 'orders':
+        return <OrderManagement />;
+      case 'users':
+        return <UserManagement />;
+      case 'payments':
+        return <PaymentManagement />;
+      case 'emails':
+        return <EmailManagement />;
+      case 'settings':
+        return <EcommerceCustomization />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
   return (
     <div className="admin-panel">
       <div className="admin-sidebar">
@@ -1844,6 +1867,12 @@ const Admin = () => {
             onClick={() => setActiveTab('emails')}
           >
             📧 Email Marketing
+          </button>
+          <button 
+            className={activeTab === 'settings' ? 'active' : ''}
+            onClick={() => setActiveTab('settings')}
+          >
+            ⚙️ Settings
           </button>
         </nav>
       </div>
