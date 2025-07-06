@@ -3350,6 +3350,12 @@ const Admin = () => {
         return <MaintenanceMode />;
       case 'whatsapp':
         return <WhatsAppIntegration />;
+      case 'uxbuilder':
+        return <UXBuilder />;
+      case 'cms':
+        return <CMSManager />;
+      case 'ecommerce':
+        return <AdvancedEcommerce />;
       default:
         return <Dashboard />;
     }
