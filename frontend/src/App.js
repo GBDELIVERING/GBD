@@ -377,7 +377,7 @@ const Cart = () => {
                     />
                     <div>
                       <h3 className="font-semibold">{item.product.name}</h3>
-                      <p className="text-gray-600">${item.product.price} each</p>
+                      <p className="text-gray-600">RWF {item.product.price.toLocaleString()} each</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
