@@ -4633,6 +4633,250 @@ const Admin = () => {
     );
   };
 
+  const AdvancedEcommerce = () => {
+    const [activeEcomTab, setActiveEcomTab] = useState('products');
+    const [coupons, setCoupons] = useState([]);
+    const [variations, setVariations] = useState([]);
+    const [attributes, setAttributes] = useState([]);
+    const [shippingZones, setShippingZones] = useState([]);
+    const [taxRates, setTaxRates] = useState([]);
+    const [analytics, setAnalytics] = useState({});
+
+    const ecommerceTabs = [
+      { id: 'products', name: '📦 Advanced Products', description: 'Product variations & attributes' },
+      { id: 'coupons', name: '🎟️ Coupons & Discounts', description: 'Promotional codes' },
+      { id: 'shipping', name: '🚚 Shipping Zones', description: 'Delivery management' },
+      { id: 'tax', name: '💰 Tax Settings', description: 'Tax rates & rules' },
+      { id: 'analytics', name: '📊 Analytics', description: 'Sales insights' }
+    ];
+
+    useEffect(() => {
+      if (activeEcomTab === 'coupons') {
+        fetchCoupons();
+      } else if (activeEcomTab === 'shipping') {
+        fetchShippingZones();
+      } else if (activeEcomTab === 'tax') {
+        fetchTaxRates();
+      } else if (activeEcomTab === 'analytics') {
+        fetchAnalytics();
+      }
+    }, [activeEcomTab]);
+
+    const fetchCoupons = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/coupons`);
+        if (response.ok) {
+          const data = await response.json();
+          setCoupons(data.coupons || []);
+        }
+      } catch (error) {
+        console.error('Error fetching coupons:', error);
+      }
+    };
+
+    const fetchShippingZones = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/shipping-zones`);
+        if (response.ok) {
+          const data = await response.json();
+          setShippingZones(data.zones || []);
+        }
+      } catch (error) {
+        console.error('Error fetching shipping zones:', error);
+      }
+    };
+
+    const fetchTaxRates = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/tax-rates`);
+        if (response.ok) {
+          const data = await response.json();
+          setTaxRates(data.rates || []);
+        }
+      } catch (error) {
+        console.error('Error fetching tax rates:', error);
+      }
+    };
+
+    const fetchAnalytics = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/analytics/overview`);
+        if (response.ok) {
+          const data = await response.json();
+          setAnalytics(data);
+        }
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      }
+    };
+
+    const renderAdvancedProducts = () => (
+      <div className="advanced-products">
+        <div className="ecom-section">
+          <h3>📦 Product Variations & Attributes</h3>
+          <div className="feature-grid">
+            <div className="feature-card">
+              <h4>🎨 Product Attributes</h4>
+              <p>Create size, color, material attributes for variable products</p>
+              <button className="feature-btn">Manage Attributes</button>
+            </div>
+            <div className="feature-card">
+              <h4>🔄 Product Variations</h4>
+              <p>Set up different variations with unique pricing and stock</p>
+              <button className="feature-btn">Create Variations</button>
+            </div>
+            <div className="feature-card">
+              <h4>📷 Gallery Management</h4>
+              <p>Advanced image management with zoom and gallery features</p>
+              <button className="feature-btn">Image Gallery</button>
+            </div>
+            <div className="feature-card">
+              <h4>📦 Inventory Tracking</h4>
+              <p>Advanced stock management with low stock alerts</p>
+              <button className="feature-btn">Inventory Settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    const renderCoupons = () => (
+      <div className="coupons-manager">
+        <div className="coupons-header">
+          <h3>🎟️ Coupons & Discount Management</h3>
+          <button className="add-btn">➕ Create Coupon</button>
+        </div>
+        <div className="coupons-grid">
+          {coupons.map(coupon => (
+            <div key={coupon._id} className="coupon-card">
+              <div className="coupon-header">
+                <h4>{coupon.code}</h4>
+                <span className={`coupon-status ${coupon.active ? 'active' : 'inactive'}`}>
+                  {coupon.active ? '✅ Active' : '❌ Inactive'}
+                </span>
+              </div>
+              <div className="coupon-details">
+                <p><strong>Type:</strong> {coupon.type}</p>
+                <p><strong>Amount:</strong> {coupon.type === 'percentage' ? `${coupon.amount}%` : `RWF ${coupon.amount}`}</p>
+                <p><strong>Usage:</strong> {coupon.usage_count}/{coupon.usage_limit || '∞'}</p>
+                {coupon.expiry_date && (
+                  <p><strong>Expires:</strong> {new Date(coupon.expiry_date).toLocaleDateString()}</p>
+                )}
+              </div>
+              <div className="coupon-actions">
+                <button className="edit-btn">✏️ Edit</button>
+                <button className="delete-btn">🗑️ Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const renderAnalytics = () => (
+      <div className="analytics-dashboard">
+        <h3>📊 E-commerce Analytics</h3>
+        <div className="analytics-grid">
+          <div className="analytics-card">
+            <div className="analytics-icon">💰</div>
+            <div className="analytics-content">
+              <h4>Total Sales</h4>
+              <p className="analytics-value">RWF {analytics.total_sales?.toLocaleString() || '0'}</p>
+            </div>
+          </div>
+          <div className="analytics-card">
+            <div className="analytics-icon">📦</div>
+            <div className="analytics-content">
+              <h4>Total Orders</h4>
+              <p className="analytics-value">{analytics.total_orders || 0}</p>
+            </div>
+          </div>
+          <div className="analytics-card">
+            <div className="analytics-icon">📈</div>
+            <div className="analytics-content">
+              <h4>Average Order</h4>
+              <p className="analytics-value">
+                RWF {analytics.total_orders > 0 ? (analytics.total_sales / analytics.total_orders).toFixed(2) : '0'}
+              </p>
+            </div>
+          </div>
+          <div className="analytics-card">
+            <div className="analytics-icon">⭐</div>
+            <div className="analytics-content">
+              <h4>Top Products</h4>
+              <p className="analytics-value">{analytics.top_products?.length || 0} items</p>
+            </div>
+          </div>
+        </div>
+        
+        {analytics.recent_orders && (
+          <div className="recent-orders">
+            <h4>Recent Orders</h4>
+            <div className="orders-list">
+              {analytics.recent_orders.map(order => (
+                <div key={order.order_id} className="order-item">
+                  <div className="order-info">
+                    <span className="order-id">#{order.order_id.substring(0, 8)}</span>
+                    <span className="order-amount">RWF {order.total_amount?.toLocaleString()}</span>
+                  </div>
+                  <div className="order-meta">
+                    <span className="order-date">
+                      {new Date(order.created_at).toLocaleDateString()}
+                    </span>
+                    <span className={`order-status ${order.status}`}>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+    return (
+      <div className="advanced-ecommerce">
+        <div className="ecommerce-header">
+          <h2>🛒 Advanced E-commerce Management</h2>
+          <p>WooCommerce-like features for your online store</p>
+        </div>
+
+        <div className="ecommerce-navigation">
+          {ecommerceTabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`ecom-tab ${activeEcomTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveEcomTab(tab.id)}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="ecommerce-content">
+          {activeEcomTab === 'products' && renderAdvancedProducts()}
+          {activeEcomTab === 'coupons' && renderCoupons()}
+          {activeEcomTab === 'analytics' && renderAnalytics()}
+          {activeEcomTab === 'shipping' && (
+            <div className="shipping-zones">
+              <h3>🚚 Shipping Zones Management</h3>
+              <p>Configure delivery zones and shipping rates for different regions</p>
+              <button className="add-btn">➕ Add Shipping Zone</button>
+            </div>
+          )}
+          {activeEcomTab === 'tax' && (
+            <div className="tax-settings">
+              <h3>💰 Tax Rate Management</h3>
+              <p>Set up tax rates for different countries and regions</p>
+              <button className="add-btn">➕ Add Tax Rate</button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const FrontendThemeCustomization = () => {
     const [themeSettings, setThemeSettings] = useState({
       primaryColor: '#3b82f6',
