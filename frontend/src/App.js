@@ -614,24 +614,24 @@ const PaymentModal = ({ total, onClose, cartItems }) => {
           <div className="mb-4 p-3 bg-gray-50 rounded-md">
             <div className="flex justify-between mb-2">
               <span>Subtotal:</span>
-              <span>${total.toFixed(2)}</span>
+              <span>RWF {total.toLocaleString()}</span>
             </div>
             {paymentMethod === 'card' && (
               <>
                 <div className="flex justify-between mb-2">
                   <span>Processing Fee (3%):</span>
-                  <span>${processingFee.toFixed(2)}</span>
+                  <span>RWF {processingFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-bold">
                   <span>Total:</span>
-                  <span>${cardTotal.toFixed(2)}</span>
+                  <span>RWF {cardTotal.toLocaleString()}</span>
                 </div>
               </>
             )}
             {paymentMethod === 'momo' && (
               <div className="flex justify-between font-bold">
                 <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
+                <span>RWF {total.toLocaleString()}</span>
               </div>
             )}
           </div>
