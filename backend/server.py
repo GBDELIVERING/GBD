@@ -399,6 +399,119 @@ class SectionContent(BaseModel):
     order: int = 0
     active: bool = True
 
+# WordPress-like CMS Models
+class Post(BaseModel):
+    title: str
+    slug: Optional[str] = None
+    content: str
+    excerpt: Optional[str] = None
+    status: str = "draft"  # draft, published, private
+    post_type: str = "post"  # post, page
+    author_id: str
+    featured_image: Optional[str] = None
+    categories: List[str] = []
+    tags: List[str] = []
+    meta_description: Optional[str] = None
+    meta_keywords: Optional[str] = None
+    published_date: Optional[datetime] = None
+
+class Category(BaseModel):
+    name: str
+    slug: Optional[str] = None
+    description: Optional[str] = None
+    parent_id: Optional[str] = None
+    category_type: str = "post"  # post, product
+
+class Tag(BaseModel):
+    name: str
+    slug: Optional[str] = None
+    description: Optional[str] = None
+
+class MediaItem(BaseModel):
+    filename: str
+    original_name: str
+    file_path: str
+    file_url: str
+    file_type: str
+    file_size: int
+    alt_text: Optional[str] = None
+    caption: Optional[str] = None
+    description: Optional[str] = None
+
+# UX Builder Models
+class PageComponent(BaseModel):
+    component_id: str
+    type: str  # text, image, button, form, grid, etc.
+    properties: Dict[str, Any]
+    styles: Dict[str, Any]
+    position: Dict[str, Any]  # x, y, width, height
+    parent_id: Optional[str] = None
+    order: int = 0
+
+class PageTemplate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    thumbnail: Optional[str] = None
+    components: List[PageComponent]
+    page_type: str = "custom"  # home, about, contact, product, etc.
+    responsive_settings: Dict[str, Any] = {}
+
+class BuilderPage(BaseModel):
+    page_id: str
+    name: str
+    slug: str
+    title: Optional[str] = None
+    meta_description: Optional[str] = None
+    components: List[PageComponent]
+    template_id: Optional[str] = None
+    status: str = "draft"  # draft, published
+    responsive_settings: Dict[str, Any] = {}
+
+# WooCommerce-like Models
+class ProductVariation(BaseModel):
+    name: str
+    attributes: Dict[str, str]  # size: Large, color: Red
+    price: float
+    stock: int
+    sku: Optional[str] = None
+    image_url: Optional[str] = None
+    weight: Optional[float] = None
+
+class ProductAttribute(BaseModel):
+    name: str
+    values: List[str]
+    is_variation: bool = False
+    is_visible: bool = True
+
+class Coupon(BaseModel):
+    code: str
+    type: str = "percentage"  # percentage, fixed_cart, fixed_product
+    amount: float
+    description: Optional[str] = None
+    expiry_date: Optional[datetime] = None
+    usage_limit: Optional[int] = None
+    usage_count: int = 0
+    minimum_amount: Optional[float] = None
+    maximum_amount: Optional[float] = None
+    product_ids: List[str] = []
+    exclude_product_ids: List[str] = []
+    active: bool = True
+
+class ShippingZone(BaseModel):
+    name: str
+    regions: List[str]
+    methods: List[Dict[str, Any]]  # flat_rate, free_shipping, local_pickup
+    active: bool = True
+
+class TaxRate(BaseModel):
+    country: str
+    state: Optional[str] = None
+    rate: float
+    name: str
+    priority: int = 1
+    compound: bool = False
+    shipping: bool = False
+
 # Maintenance mode middleware
 @app.middleware("http")
 async def maintenance_mode_middleware(request: Request, call_next):
