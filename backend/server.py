@@ -1050,7 +1050,7 @@ async def update_product(product_id: str, product: Product):
         """
         await send_email(admin_email, subject, body)
     
-    return {"message": "Product updated successfully"}
+    return {"message": "Product updated"}
 
 @app.delete("/api/admin/products/{product_id}")
 async def delete_product(product_id: str):
