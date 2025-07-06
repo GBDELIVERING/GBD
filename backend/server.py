@@ -1052,6 +1052,46 @@ async def update_product(product_id: str, product: Product):
     
     return {"message": "Product updated"}
 
+@app.patch("/api/admin/products/{product_id}")
+async def partial_update_product(product_id: str, updates: Dict[str, Any]):
+    """Partially update product for admin"""
+    # Remove None values and empty strings
+    clean_updates = {}
+    for key, value in updates.items():
+        if value is not None and value != '':
+            clean_updates[key] = value
+    
+    if not clean_updates:
+        raise HTTPException(status_code=400, detail="No valid updates provided")
+    
+    clean_updates["updated_at"] = datetime.utcnow()
+    
+    result = await db.products.update_one(
+        {"_id": ObjectId(product_id)},
+        {"$set": clean_updates}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Check for low stock and send notification if stock was updated
+    if "stock" in clean_updates and clean_updates.get("stock", 0) <= 10:
+        # Get product name for notification
+        product = await db.products.find_one({"_id": ObjectId(product_id)})
+        if product:
+            admin_email = "admin@freshcuts.rw"
+            subject = f"Low Stock Alert - {product['name']}"
+            body = f"""
+            <h2>Low Stock Alert</h2>
+            <p><strong>Product:</strong> {product['name']}</p>
+            <p><strong>Current Stock:</strong> {clean_updates.get('stock', 0)} {product.get('unit', 'units')}</p>
+            <p><strong>Category:</strong> {product.get('category', 'N/A')}</p>
+            <p>Please restock this item soon to avoid running out of inventory.</p>
+            """
+            await send_email(admin_email, subject, body)
+    
+    return {"message": "Product updated partially", "updated_fields": list(clean_updates.keys())}
+
 @app.delete("/api/admin/products/{product_id}")
 async def delete_product(product_id: str):
     """Delete product for admin"""
