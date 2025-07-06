@@ -4,7 +4,10 @@ import time
 import random
 import string
 import os
+import base64
 from dotenv import load_dotenv
+from io import BytesIO
+from PIL import Image
 
 # Load environment variables
 load_dotenv()
