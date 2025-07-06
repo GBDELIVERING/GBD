@@ -2621,6 +2621,366 @@ const Admin = () => {
     );
   };
 
+  const MaintenanceMode = () => {
+    const [maintenanceSettings, setMaintenanceSettings] = useState({
+      enabled: false,
+      title: 'Site Under Maintenance',
+      message: 'We are currently performing scheduled maintenance. Please check back soon!',
+      estimated_time: '',
+      contact_email: ''
+    });
+
+    useEffect(() => {
+      fetchMaintenanceSettings();
+    }, []);
+
+    const fetchMaintenanceSettings = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/maintenance`);
+        if (response.ok) {
+          const data = await response.json();
+          setMaintenanceSettings(data);
+        }
+      } catch (error) {
+        console.error('Error fetching maintenance settings:', error);
+      }
+    };
+
+    const handleToggleMaintenance = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/maintenance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(maintenanceSettings)
+        });
+
+        if (response.ok) {
+          alert(`Maintenance mode ${maintenanceSettings.enabled ? 'enabled' : 'disabled'} successfully!`);
+          fetchMaintenanceSettings();
+        }
+      } catch (error) {
+        alert('Error updating maintenance mode');
+      }
+    };
+
+    return (
+      <div className="maintenance-mode">
+        <div className="maintenance-header">
+          <h2>🔧 Maintenance Mode</h2>
+          <div className="maintenance-status">
+            <span className={`status-indicator ${maintenanceSettings.enabled ? 'enabled' : 'disabled'}`}>
+              {maintenanceSettings.enabled ? '🔴 Maintenance Active' : '🟢 Site Online'}
+            </span>
+          </div>
+        </div>
+
+        <div className="maintenance-settings">
+          <div className="settings-card">
+            <h3>Maintenance Settings</h3>
+            
+            <div className="form-group">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={maintenanceSettings.enabled}
+                  onChange={(e) => setMaintenanceSettings({
+                    ...maintenanceSettings,
+                    enabled: e.target.checked
+                  })}
+                />
+                <span className="toggle-text">Enable Maintenance Mode</span>
+              </label>
+              <p className="help-text">
+                When enabled, visitors will see a maintenance page. Admins can still access the site.
+              </p>
+            </div>
+
+            <div className="form-group">
+              <label>Maintenance Page Title</label>
+              <input
+                type="text"
+                value={maintenanceSettings.title}
+                onChange={(e) => setMaintenanceSettings({
+                  ...maintenanceSettings,
+                  title: e.target.value
+                })}
+                placeholder="Site Under Maintenance"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Maintenance Message</label>
+              <textarea
+                value={maintenanceSettings.message}
+                onChange={(e) => setMaintenanceSettings({
+                  ...maintenanceSettings,
+                  message: e.target.value
+                })}
+                rows="4"
+                placeholder="We are currently performing scheduled maintenance. Please check back soon!"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Estimated Time (Optional)</label>
+                <input
+                  type="text"
+                  value={maintenanceSettings.estimated_time}
+                  onChange={(e) => setMaintenanceSettings({
+                    ...maintenanceSettings,
+                    estimated_time: e.target.value
+                  })}
+                  placeholder="2 hours, Tomorrow 9 AM, etc."
+                />
+              </div>
+              <div className="form-group">
+                <label>Contact Email (Optional)</label>
+                <input
+                  type="email"
+                  value={maintenanceSettings.contact_email}
+                  onChange={(e) => setMaintenanceSettings({
+                    ...maintenanceSettings,
+                    contact_email: e.target.value
+                  })}
+                  placeholder="support@yourstore.com"
+                />
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button 
+                onClick={handleToggleMaintenance}
+                className={`maintenance-btn ${maintenanceSettings.enabled ? 'disable' : 'enable'}`}
+              >
+                {maintenanceSettings.enabled ? '🟢 Disable Maintenance' : '🔴 Enable Maintenance'}
+              </button>
+            </div>
+          </div>
+
+          <div className="maintenance-preview">
+            <h3>Preview</h3>
+            <div className="preview-container">
+              <div className="maintenance-preview-page">
+                <h2>{maintenanceSettings.title}</h2>
+                <p>{maintenanceSettings.message}</p>
+                {maintenanceSettings.estimated_time && (
+                  <p><strong>Estimated completion:</strong> {maintenanceSettings.estimated_time}</p>
+                )}
+                {maintenanceSettings.contact_email && (
+                  <p><strong>Contact:</strong> {maintenanceSettings.contact_email}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const WhatsAppIntegration = () => {
+    const [whatsappSettings, setWhatsappSettings] = useState({
+      enabled: false,
+      phone_number: '',
+      auto_send: false,
+      message_template: 'default'
+    });
+    const [testOrder, setTestOrder] = useState('');
+    const [generatedUrl, setGeneratedUrl] = useState('');
+    const [formattedMessage, setFormattedMessage] = useState('');
+
+    useEffect(() => {
+      fetchWhatsappSettings();
+    }, []);
+
+    const fetchWhatsappSettings = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/whatsapp/settings`);
+        if (response.ok) {
+          const data = await response.json();
+          setWhatsappSettings(data);
+        }
+      } catch (error) {
+        console.error('Error fetching WhatsApp settings:', error);
+      }
+    };
+
+    const handleSaveSettings = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/whatsapp/settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(whatsappSettings)
+        });
+
+        if (response.ok) {
+          alert('WhatsApp settings saved successfully!');
+        }
+      } catch (error) {
+        alert('Error saving WhatsApp settings');
+      }
+    };
+
+    const handleTestOrder = async () => {
+      if (!testOrder || !whatsappSettings.phone_number) {
+        alert('Please enter an order ID and phone number');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/whatsapp/send-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: testOrder,
+            phone_number: whatsappSettings.phone_number
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setGeneratedUrl(data.whatsapp_url);
+          setFormattedMessage(data.formatted_message);
+        } else {
+          alert('Error generating WhatsApp message');
+        }
+      } catch (error) {
+        alert('Error testing WhatsApp integration');
+      }
+    };
+
+    return (
+      <div className="whatsapp-integration">
+        <div className="management-header">
+          <h2>📱 WhatsApp Integration</h2>
+          <div className="integration-status">
+            <span className={`status-indicator ${whatsappSettings.enabled ? 'enabled' : 'disabled'}`}>
+              {whatsappSettings.enabled ? '✅ Enabled' : '❌ Disabled'}
+            </span>
+          </div>
+        </div>
+
+        <div className="whatsapp-settings">
+          <div className="settings-card">
+            <h3>WhatsApp Settings</h3>
+            
+            <div className="form-group">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={whatsappSettings.enabled}
+                  onChange={(e) => setWhatsappSettings({
+                    ...whatsappSettings,
+                    enabled: e.target.checked
+                  })}
+                />
+                <span className="toggle-text">Enable WhatsApp Integration</span>
+              </label>
+            </div>
+
+            <div className="form-group">
+              <label>WhatsApp Phone Number</label>
+              <input
+                type="tel"
+                value={whatsappSettings.phone_number}
+                onChange={(e) => setWhatsappSettings({
+                  ...whatsappSettings,
+                  phone_number: e.target.value
+                })}
+                placeholder="+250783123456"
+              />
+              <p className="help-text">Include country code (e.g., +250783123456)</p>
+            </div>
+
+            <div className="form-group">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={whatsappSettings.auto_send}
+                  onChange={(e) => setWhatsappSettings({
+                    ...whatsappSettings,
+                    auto_send: e.target.checked
+                  })}
+                />
+                <span className="toggle-text">Auto-send new orders to WhatsApp</span>
+              </label>
+              <p className="help-text">Automatically generate WhatsApp links for new orders</p>
+            </div>
+
+            <div className="form-actions">
+              <button onClick={handleSaveSettings} className="save-btn">
+                💾 Save Settings
+              </button>
+            </div>
+          </div>
+
+          <div className="test-integration">
+            <h3>Test Integration</h3>
+            <div className="test-form">
+              <div className="form-group">
+                <label>Test Order ID</label>
+                <input
+                  type="text"
+                  value={testOrder}
+                  onChange={(e) => setTestOrder(e.target.value)}
+                  placeholder="Enter an existing order ID"
+                />
+              </div>
+              <button onClick={handleTestOrder} className="test-btn">
+                🧪 Generate Test Message
+              </button>
+            </div>
+
+            {generatedUrl && (
+              <div className="test-results">
+                <h4>Generated WhatsApp Link:</h4>
+                <div className="url-container">
+                  <a href={generatedUrl} target="_blank" rel="noopener noreferrer" className="whatsapp-link">
+                    📱 Open in WhatsApp
+                  </a>
+                  <button 
+                    onClick={() => navigator.clipboard.writeText(generatedUrl)}
+                    className="copy-btn"
+                  >
+                    📋 Copy Link
+                  </button>
+                </div>
+
+                <h4>Message Preview:</h4>
+                <div className="message-preview">
+                  <pre>{formattedMessage}</pre>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="integration-help">
+            <h3>How it works</h3>
+            <div className="help-content">
+              <ol>
+                <li>Enable WhatsApp integration and set your phone number</li>
+                <li>When customers place orders, you can send order details to WhatsApp</li>
+                <li>The system generates a formatted message with order information</li>
+                <li>Click the WhatsApp link to open the conversation with the formatted message</li>
+                <li>You can forward the order details to your team or suppliers</li>
+              </ol>
+              
+              <div className="benefits">
+                <h4>Benefits:</h4>
+                <ul>
+                  <li>📱 Quick order communication</li>
+                  <li>📋 Formatted order details</li>
+                  <li>⚡ Instant notifications</li>
+                  <li>🔗 Easy sharing with team</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const FrontendThemeCustomization = () => {
     const [themeSettings, setThemeSettings] = useState({
       primaryColor: '#3b82f6',
