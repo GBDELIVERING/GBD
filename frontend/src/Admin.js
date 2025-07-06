@@ -125,7 +125,7 @@ const Admin = () => {
         <div className="stat-card">
           <div className="stat-icon">💰</div>
           <div className="stat-content">
-            <h3>${stats.totalRevenue.toFixed(2)}</h3>
+            <h3>RWF {stats.totalRevenue.toLocaleString()}</h3>
             <p>Total Revenue</p>
           </div>
         </div>
