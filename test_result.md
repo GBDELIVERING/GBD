@@ -366,26 +366,15 @@ metadata:
 
 test_plan:
   current_focus:
-    - "User Registration API"
-    - "User Login API"
-    - "User Profile API"
-    - "Get All Products API"
-    - "Get Products by Category API"
-    - "Get Single Product API"
-    - "Create Product API"
-    - "Add to Cart API"
-    - "Get Cart API"
-    - "Remove from Cart API"
-    - "MoMo Payment Initiation API"
-    - "MoMo Payment Status API"
-    - "DPO Payment Token API"
-    - "DPO Payment Verification API"
-    - "Create Order API"
-    - "Get Orders API"
+    - "Enhanced Product Table with More Columns"
+    - "Improved Editing Interface"
+    - "Enhanced Spacing and Layout"
+    - "Advanced Color Customization"
+    - "New Admin Pages"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
 
 agent_communication:
-  - agent: "testing"
-    message: "I have completed testing all backend API endpoints. All endpoints are working correctly. The DPO payment integration is mocked but the API endpoints themselves are functioning as expected. The 3% card processing fee is correctly implemented in the DPO payment token creation. All authentication, product, cart, payment, and order endpoints are working as expected."
+  - agent: "main"
+    message: "User increased budget and wants to proceed with project. Continuing with backend testing and then frontend testing of enhanced admin panel features including more table columns, improved editing interface, enhanced spacing/layout, color customization, and new Frontend Theme page."
