@@ -339,6 +339,38 @@ class EmailSettings(BaseModel):
     notify_low_stock: bool = True
     low_stock_threshold: int = 10
 
+# Location and Delivery Models
+class DeliveryZone(BaseModel):
+    name: str
+    areas: List[str]
+    base_fee: float
+    per_km_rate: float = 0.0
+    min_order_for_free: Optional[float] = None
+
+class CustomerLocation(BaseModel):
+    address: str
+    district: str
+    sector: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+class EcommerceSettings(BaseModel):
+    store_name: str = "Fresh Cuts Market"
+    store_tagline: str = "Premium Quality Meats & Fresh Groceries"
+    primary_color: str = "#dc2626"
+    secondary_color: str = "#991b1b"
+    currency: str = "RWF"
+    currency_symbol: str = "RWF"
+    tax_rate: float = 0.0
+    enable_delivery: bool = True
+    enable_pickup: bool = True
+    checkout_fields: Dict[str, Any] = {
+        "require_phone": True,
+        "require_address": True,
+        "allow_notes": True
+    }
+    order_statuses: List[str] = ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"]
+
 # Helper Functions
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
