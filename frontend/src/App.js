@@ -382,7 +382,7 @@ const Cart = () => {
                   </div>
                   <div className="flex items-center space-x-4">
                     <span className="text-gray-600">Qty: {item.quantity}</span>
-                    <span className="font-semibold">${item.subtotal.toFixed(2)}</span>
+                    <span className="font-semibold">RWF {item.subtotal.toLocaleString()}</span>
                     <button 
                       onClick={() => removeFromCart(item.product_id)}
                       className="text-red-600 hover:text-red-800 transition"
