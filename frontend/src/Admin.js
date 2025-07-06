@@ -3527,6 +3527,330 @@ const Admin = () => {
     );
   };
 
+  const CMSManager = () => {
+    const [activeSubTab, setActiveSubTab] = useState('posts');
+    const [posts, setPosts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [tags, setTags] = useState([]);
+    const [media, setMedia] = useState([]);
+    const [showPostModal, setShowPostModal] = useState(false);
+    const [editingPost, setEditingPost] = useState(null);
+
+    const subTabs = [
+      { id: 'posts', name: '📝 Posts', description: 'Manage blog posts' },
+      { id: 'pages', name: '📄 Pages', description: 'Manage static pages' },
+      { id: 'categories', name: '🏷️ Categories', description: 'Organize content' },
+      { id: 'tags', name: '🔖 Tags', description: 'Tag content' },
+      { id: 'media', name: '🖼️ Media Library', description: 'Manage files' }
+    ];
+
+    useEffect(() => {
+      if (activeSubTab === 'posts' || activeSubTab === 'pages') {
+        fetchPosts(activeSubTab === 'pages' ? 'page' : 'post');
+      } else if (activeSubTab === 'categories') {
+        fetchCategories();
+      } else if (activeSubTab === 'tags') {
+        fetchTags();
+      } else if (activeSubTab === 'media') {
+        fetchMedia();
+      }
+    }, [activeSubTab]);
+
+    const fetchPosts = async (postType = 'post') => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/posts?post_type=${postType}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPosts(data.posts || []);
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/categories`);
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.categories || []);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    const fetchTags = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/tags`);
+        if (response.ok) {
+          const data = await response.json();
+          setTags(data.tags || []);
+        }
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+      }
+    };
+
+    const fetchMedia = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/media`);
+        if (response.ok) {
+          const data = await response.json();
+          setMedia(data.media || []);
+        }
+      } catch (error) {
+        console.error('Error fetching media:', error);
+      }
+    };
+
+    const handleCreatePost = async (postData) => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/posts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...postData,
+            post_type: activeSubTab === 'pages' ? 'page' : 'post',
+            author_id: 'current_user'
+          })
+        });
+
+        if (response.ok) {
+          alert('Post created successfully!');
+          setShowPostModal(false);
+          fetchPosts(activeSubTab === 'pages' ? 'page' : 'post');
+        }
+      } catch (error) {
+        alert('Error creating post');
+      }
+    };
+
+    const handleDeletePost = async (postId) => {
+      if (window.confirm('Are you sure you want to delete this post?')) {
+        try {
+          const response = await fetch(`${backendUrl}/api/admin/posts/${postId}`, {
+            method: 'DELETE'
+          });
+          if (response.ok) {
+            alert('Post deleted successfully!');
+            fetchPosts(activeSubTab === 'pages' ? 'page' : 'post');
+          }
+        } catch (error) {
+          alert('Error deleting post');
+        }
+      }
+    };
+
+    const renderPostsTab = () => (
+      <div className="posts-manager">
+        <div className="posts-header">
+          <h3>{activeSubTab === 'pages' ? '📄 Pages Manager' : '📝 Posts Manager'}</h3>
+          <button 
+            className="add-btn"
+            onClick={() => setShowPostModal(true)}
+          >
+            ➕ Add New {activeSubTab === 'pages' ? 'Page' : 'Post'}
+          </button>
+        </div>
+
+        <div className="posts-list">
+          {posts.map(post => (
+            <div key={post._id} className="post-card">
+              <div className="post-info">
+                <h4>{post.title}</h4>
+                <div className="post-meta">
+                  <span className={`status-badge ${post.status}`}>{post.status}</span>
+                  <span className="date">{new Date(post.created_at).toLocaleDateString()}</span>
+                  {post.categories?.length > 0 && (
+                    <span className="categories">
+                      Categories: {post.categories.join(', ')}
+                    </span>
+                  )}
+                </div>
+                {post.excerpt && <p className="excerpt">{post.excerpt}</p>}
+              </div>
+              <div className="post-actions">
+                <button className="edit-btn">✏️ Edit</button>
+                <button 
+                  className="delete-btn"
+                  onClick={() => handleDeletePost(post._id)}
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const renderCategoriesTab = () => (
+      <div className="categories-manager">
+        <div className="categories-header">
+          <h3>🏷️ Categories Manager</h3>
+          <button className="add-btn">➕ Add Category</button>
+        </div>
+        <div className="categories-grid">
+          {categories.map(category => (
+            <div key={category._id} className="category-card">
+              <h4>{category.name}</h4>
+              <p>{category.description}</p>
+              <div className="category-actions">
+                <button className="edit-btn">✏️ Edit</button>
+                <button className="delete-btn">🗑️ Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const renderTagsTab = () => (
+      <div className="tags-manager">
+        <div className="tags-header">
+          <h3>🔖 Tags Manager</h3>
+          <button className="add-btn">➕ Add Tag</button>
+        </div>
+        <div className="tags-cloud">
+          {tags.map(tag => (
+            <div key={tag._id} className="tag-item">
+              <span className="tag-name">{tag.name}</span>
+              <button className="tag-delete">×</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const renderMediaTab = () => (
+      <div className="media-manager">
+        <div className="media-header">
+          <h3>🖼️ Media Library</h3>
+          <button className="add-btn">⬆️ Upload Media</button>
+        </div>
+        <div className="media-grid">
+          {media.map(item => (
+            <div key={item._id} className="media-item">
+              {item.file_type?.startsWith('image/') ? (
+                <img src={item.file_url} alt={item.alt_text} />
+              ) : (
+                <div className="file-icon">📄</div>
+              )}
+              <div className="media-info">
+                <p className="filename">{item.filename}</p>
+                <p className="filesize">{(item.file_size / 1024).toFixed(1)} KB</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="cms-manager">
+        <div className="cms-header">
+          <h2>📝 CMS Manager</h2>
+          <p>WordPress-like content management system</p>
+        </div>
+
+        <div className="cms-navigation">
+          {subTabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`sub-tab ${activeSubTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveSubTab(tab.id)}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="cms-content">
+          {(activeSubTab === 'posts' || activeSubTab === 'pages') && renderPostsTab()}
+          {activeSubTab === 'categories' && renderCategoriesTab()}
+          {activeSubTab === 'tags' && renderTagsTab()}
+          {activeSubTab === 'media' && renderMediaTab()}
+        </div>
+
+        {/* Post Creation Modal */}
+        {showPostModal && (
+          <div className="modal-overlay">
+            <div className="modal large-modal">
+              <div className="modal-header">
+                <h3>✏️ Create New {activeSubTab === 'pages' ? 'Page' : 'Post'}</h3>
+                <button onClick={() => setShowPostModal(false)}>×</button>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                handleCreatePost({
+                  title: formData.get('title'),
+                  content: formData.get('content'),
+                  excerpt: formData.get('excerpt'),
+                  status: formData.get('status'),
+                  meta_description: formData.get('meta_description'),
+                  categories: formData.get('categories')?.split(',') || [],
+                  tags: formData.get('tags')?.split(',') || []
+                });
+              }}>
+                <div className="form-group">
+                  <label>Title</label>
+                  <input type="text" name="title" required />
+                </div>
+                
+                <div className="form-group">
+                  <label>Content</label>
+                  <textarea name="content" rows="10" required></textarea>
+                </div>
+                
+                <div className="form-group">
+                  <label>Excerpt</label>
+                  <textarea name="excerpt" rows="3"></textarea>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                      <option value="private">Private</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Categories (comma-separated)</label>
+                    <input type="text" name="categories" placeholder="category1, category2" />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Tags (comma-separated)</label>
+                    <input type="text" name="tags" placeholder="tag1, tag2" />
+                  </div>
+                  <div className="form-group">
+                    <label>Meta Description</label>
+                    <input type="text" name="meta_description" />
+                  </div>
+                </div>
+                
+                <div className="form-actions">
+                  <button type="submit" className="submit-btn">
+                    ➕ Create {activeSubTab === 'pages' ? 'Page' : 'Post'}
+                  </button>
+                  <button type="button" onClick={() => setShowPostModal(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const FrontendThemeCustomization = () => {
     const [themeSettings, setThemeSettings] = useState({
       primaryColor: '#3b82f6',
