@@ -2298,6 +2298,14 @@ const Admin = () => {
         return <EcommerceCustomization />;
       case 'frontend':
         return <FrontendThemeCustomization />;
+      case 'sliders':
+        return <SliderManagement />;
+      case 'builder':
+        return <WebsiteBuilder />;
+      case 'maintenance':
+        return <MaintenanceMode />;
+      case 'whatsapp':
+        return <WhatsAppIntegration />;
       default:
         return <Dashboard />;
     }
