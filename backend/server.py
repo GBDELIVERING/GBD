@@ -110,6 +110,9 @@ class ProductBulkUpdate(BaseModel):
     product_ids: List[str]
     updates: Dict[str, Any]
 
+class BulkProductUpdate(BaseModel):
+    updates: List[Dict[str, Any]]  # List of product updates with IDs
+
 class CartItem(BaseModel):
     product_id: str
     quantity: float  # Changed to float for custom quantities
