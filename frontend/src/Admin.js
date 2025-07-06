@@ -208,15 +208,7 @@ const Admin = () => {
 
   const ProductManagement = () => {
     const [showAddModal, setShowAddModal] = useState(false);
-    const [showBulkEditModal, setShowBulkEditModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
-    const [bulkUpdates, setBulkUpdates] = useState({});
-    const [displaySettings, setDisplaySettings] = useState({
-      layout: 'table',
-      itemsPerPage: 12,
-      sortBy: 'name'
-    });
-    const [selectedProducts, setSelectedProducts] = useState([]);
     const [editableProducts, setEditableProducts] = useState([]);
     const [imageFile, setImageFile] = useState(null);
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -327,40 +319,6 @@ const Admin = () => {
       }
     };
 
-    const handleTableBulkUpdate = async () => {
-      const updates = editableProducts
-        .filter(product => product.isEditing)
-        .map(product => {
-          const { isEditing, ...productData } = product;
-          return productData;
-        });
-
-      if (updates.length === 0) {
-        alert('No products selected for update');
-        return;
-      }
-
-      try {
-        const response = await fetch(`${backendUrl}/api/admin/products/bulk-table`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ updates })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          alert(`Bulk update completed! ${data.updated_count} products updated.`);
-          if (data.errors.length > 0) {
-            console.log('Errors:', data.errors);
-          }
-          fetchProducts();
-          setEditableProducts(prev => prev.map(p => ({ ...p, isEditing: false })));
-        }
-      } catch (error) {
-        alert('Error updating products');
-      }
-    };
-
     const toggleProductEdit = (productId) => {
       setEditableProducts(prev => 
         prev.map(product => 
@@ -379,6 +337,61 @@ const Admin = () => {
             : product
         )
       );
+    };
+
+    const saveEditedProducts = async () => {
+      const editedProducts = editableProducts.filter(p => p.isEditing);
+      
+      if (editedProducts.length === 0) {
+        alert('No products selected for editing');
+        return;
+      }
+
+      try {
+        let successCount = 0;
+        let errorCount = 0;
+
+        // Update each product individually
+        for (const product of editedProducts) {
+          try {
+            const response = await fetch(`${backendUrl}/api/admin/products/${product._id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: product.name,
+                description: product.description,
+                price: parseFloat(product.price),
+                category: product.category,
+                stock: parseInt(product.stock),
+                unit: product.unit,
+                discount_percentage: parseFloat(product.discount_percentage),
+                min_quantity: parseFloat(product.min_quantity || 1),
+                max_quantity: product.max_quantity ? parseFloat(product.max_quantity) : null,
+                price_per_unit: product.price_per_unit,
+                image_url: product.image_url,
+                weight: product.weight ? parseFloat(product.weight) : null
+              })
+            });
+
+            if (response.ok) {
+              successCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            errorCount++;
+          }
+        }
+
+        alert(`Bulk update completed! ${successCount} products updated successfully${errorCount > 0 ? `, ${errorCount} failed` : ''}.`);
+        
+        // Reset editing state and refresh products
+        setEditableProducts(prev => prev.map(p => ({ ...p, isEditing: false })));
+        fetchProducts();
+
+      } catch (error) {
+        alert('Error during bulk update');
+      }
     };
 
     const resetForm = () => {
@@ -425,10 +438,12 @@ const Admin = () => {
       }
     };
 
+    const editingCount = editableProducts.filter(p => p.isEditing).length;
+
     return (
       <div className="product-management">
         <div className="management-header">
-          <h2>📦 Product Management</h2>
+          <h2>📦 Product Management (BEAR-Style Bulk Edit)</h2>
           <div className="management-actions">
             <button 
               className="add-btn"
@@ -437,13 +452,17 @@ const Admin = () => {
               ➕ Add New Product
             </button>
             <button 
-              className="bulk-edit-btn"
-              onClick={handleTableBulkUpdate}
-              disabled={editableProducts.filter(p => p.isEditing).length === 0}
+              className="bulk-save-btn"
+              onClick={saveEditedProducts}
+              disabled={editingCount === 0}
             >
-              💾 Save Changes ({editableProducts.filter(p => p.isEditing).length})
+              💾 Save Changes ({editingCount})
             </button>
           </div>
+        </div>
+
+        <div className="bulk-edit-instructions">
+          <p>📝 <strong>How to bulk edit:</strong> Check the products you want to edit, make changes directly in the table, then click "Save Changes"</p>
         </div>
 
         <div className="table-view">
@@ -451,28 +470,33 @@ const Admin = () => {
             <table className="products-table">
               <thead>
                 <tr>
-                  <th>Edit</th>
-                  <th>Image</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Price (RWF)</th>
-                  <th>Stock</th>
-                  <th>Unit</th>
-                  <th>Discount %</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>✏️ Edit</th>
+                  <th>🖼️ Image</th>
+                  <th>📦 Name</th>
+                  <th>🏷️ Category</th>
+                  <th>💰 Price (RWF)</th>
+                  <th>📊 Stock</th>
+                  <th>📏 Unit</th>
+                  <th>🏷️ Discount %</th>
+                  <th>⭐ Status</th>
+                  <th>🔧 Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {editableProducts.map(product => (
                   <tr key={product._id} className={product.isEditing ? 'editing-row' : ''}>
                     <td>
-                      <input
-                        type="checkbox"
-                        checked={product.isEditing}
-                        onChange={() => toggleProductEdit(product._id)}
-                        className="edit-checkbox"
-                      />
+                      <label className="edit-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={product.isEditing}
+                          onChange={() => toggleProductEdit(product._id)}
+                          className="edit-checkbox"
+                        />
+                        <span className="edit-indicator">
+                          {product.isEditing ? '✏️ Editing' : '📝 Edit'}
+                        </span>
+                      </label>
                     </td>
                     <td>
                       <img 
@@ -488,9 +512,10 @@ const Admin = () => {
                           value={product.name}
                           onChange={(e) => updateProductField(product._id, 'name', e.target.value)}
                           className="table-input"
+                          placeholder="Product name..."
                         />
                       ) : (
-                        product.name
+                        <span className="product-name">{product.name}</span>
                       )}
                     </td>
                     <td>
@@ -505,7 +530,7 @@ const Admin = () => {
                           ))}
                         </select>
                       ) : (
-                        product.category.replace('_', ' ')
+                        <span className="category-badge">{product.category.replace('_', ' ')}</span>
                       )}
                     </td>
                     <td>
@@ -513,11 +538,12 @@ const Admin = () => {
                         <input
                           type="number"
                           value={product.price}
-                          onChange={(e) => updateProductField(product._id, 'price', parseFloat(e.target.value))}
-                          className="table-input"
+                          onChange={(e) => updateProductField(product._id, 'price', parseFloat(e.target.value) || 0)}
+                          className="table-input price-input"
+                          placeholder="0.00"
                         />
                       ) : (
-                        product.price.toLocaleString()
+                        <span className="price-display">RWF {product.price.toLocaleString()}</span>
                       )}
                     </td>
                     <td>
@@ -525,14 +551,19 @@ const Admin = () => {
                         <input
                           type="number"
                           value={product.stock}
-                          onChange={(e) => updateProductField(product._id, 'stock', parseInt(e.target.value))}
-                          className="table-input"
+                          onChange={(e) => updateProductField(product._id, 'stock', parseInt(e.target.value) || 0)}
+                          className="table-input stock-input"
+                          placeholder="0"
                         />
                       ) : (
-                        product.stock
+                        <span className={`stock-display ${product.stock <= 10 ? 'low-stock' : ''}`}>
+                          {product.stock}
+                        </span>
                       )}
                     </td>
-                    <td>{product.unit}</td>
+                    <td>
+                      <span className="unit-badge">{product.unit}</span>
+                    </td>
                     <td>
                       {product.isEditing ? (
                         <input
@@ -540,11 +571,12 @@ const Admin = () => {
                           min="0"
                           max="100"
                           value={product.discount_percentage}
-                          onChange={(e) => updateProductField(product._id, 'discount_percentage', parseFloat(e.target.value))}
-                          className="table-input"
+                          onChange={(e) => updateProductField(product._id, 'discount_percentage', parseFloat(e.target.value) || 0)}
+                          className="table-input discount-input"
+                          placeholder="0"
                         />
                       ) : (
-                        product.discount_percentage + '%'
+                        <span className="discount-display">{product.discount_percentage}%</span>
                       )}
                     </td>
                     <td>
@@ -554,10 +586,18 @@ const Admin = () => {
                     </td>
                     <td>
                       <div className="table-actions">
-                        <button onClick={() => handleEdit(product)} className="edit-btn">
+                        <button 
+                          onClick={() => handleEdit(product)} 
+                          className="edit-btn"
+                          title="Edit in modal"
+                        >
                           ✏️
                         </button>
-                        <button onClick={() => handleDelete(product._id)} className="delete-btn">
+                        <button 
+                          onClick={() => handleDelete(product._id)} 
+                          className="delete-btn"
+                          title="Delete product"
+                        >
                           🗑️
                         </button>
                       </div>
