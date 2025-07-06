@@ -298,17 +298,65 @@ backend:
         comment: "Get orders API is working correctly. Successfully retrieved the user's orders."
 
 frontend:
-  - task: "Frontend Testing"
-    implemented: true
-    working: "NA"
-    file: "/app/frontend/src/App.js"
+  - task: "Enhanced Product Table with More Columns"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/Admin.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
-        agent: "testing"
-        comment: "Frontend testing is not part of this test scope. Only backend APIs were tested."
+      - working: false
+        agent: "main"
+        comment: "Need to add more columns to product table including description, weight, min/max quantity, supplier, SKU, tags, and featured status"
+
+  - task: "Improved Editing Interface"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/Admin.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to create better editing interface with inline editing, modal improvements, and bulk editing enhancements"
+
+  - task: "Enhanced Spacing and Layout"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/Admin.css"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to improve spacing between rows and columns, add hover effects, and size adjustments"
+
+  - task: "Advanced Color Customization"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/Admin.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to add more color customization options and theme controls"
+
+  - task: "New Admin Pages"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/Admin.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to add new pages for enhanced functionality and better organization"
 
 metadata:
   created_by: "testing_agent"
