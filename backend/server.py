@@ -80,7 +80,21 @@ SMTP_PORT = 587
 EMAIL_USER = os.getenv("EMAIL_USER", "admin@freshcuts.rw")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "your-email-password")
 
-# Pydantic Models
+# OAuth and File Upload Models
+class GoogleAuthRequest(BaseModel):
+    code: str
+    redirect_uri: str
+
+class FacebookAuthRequest(BaseModel):
+    access_token: str
+
+class ProductBulkUpdate(BaseModel):
+    product_ids: List[str]
+    updates: Dict[str, Any]
+
+class BulkProductUpdate(BaseModel):
+    updates: List[Dict[str, Any]]  # List of product updates with IDs
+
 class User(BaseModel):
     email: str
     password: str
