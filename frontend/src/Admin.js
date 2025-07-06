@@ -418,7 +418,7 @@ const Admin = () => {
               <tr key={order._id}>
                 <td>{order.order_id?.substring(0, 8)}...</td>
                 <td>{order.user_id?.substring(0, 8)}...</td>
-                <td>${order.total_amount?.toFixed(2)}</td>
+                <td>RWF {order.total_amount?.toLocaleString()}</td>
                 <td>
                   <span className={`status ${order.status}`}>
                     {order.status}
