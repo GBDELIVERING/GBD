@@ -1024,43 +1024,277 @@ const Admin = () => {
     </div>
   );
 
-  const PaymentManagement = () => (
-    <div className="payment-management">
-      <h2>Payment Management</h2>
-      <div className="payments-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Transaction ID</th>
-              <th>Amount</th>
-              <th>Method</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map(payment => (
-              <tr key={payment._id}>
-                <td>{payment._id?.substring(0, 12)}...</td>
-                <td>RWF {payment.amount?.toLocaleString()}</td>
-                <td>{payment.payment_method}</td>
-                <td>
-                  <span className={`status ${payment.status}`}>
-                    {payment.status}
-                  </span>
-                </td>
-                <td>{new Date(payment.created_at).toLocaleDateString()}</td>
-                <td>
-                  <button className="view-btn">View Details</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  const EmailManagement = () => {
+    const [showBulkModal, setShowBulkModal] = useState(false);
+    const [showCustomModal, setShowCustomModal] = useState(false);
+    const [campaigns, setCampaigns] = useState([]);
+    const [bulkEmailForm, setBulkEmailForm] = useState({
+      subject: '',
+      message: '',
+      recipient_type: 'all'
+    });
+    const [customEmailForm, setCustomEmailForm] = useState({
+      subject: '',
+      message: '',
+      recipient_emails: ''
+    });
+
+    useEffect(() => {
+      fetchEmailCampaigns();
+    }, []);
+
+    const fetchEmailCampaigns = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/email-campaigns`);
+        if (response.ok) {
+          const data = await response.json();
+          setCampaigns(data.campaigns || []);
+        }
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+      }
+    };
+
+    const handleBulkEmail = async (e) => {
+      e.preventDefault();
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/send-bulk-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bulkEmailForm)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          alert(`Bulk email sent successfully! ${data.sent_count} emails sent, ${data.failed_count} failed.`);
+          setShowBulkModal(false);
+          setBulkEmailForm({ subject: '', message: '', recipient_type: 'all' });
+          fetchEmailCampaigns();
+        } else {
+          alert('Error sending bulk email');
+        }
+      } catch (error) {
+        alert('Error sending bulk email');
+      }
+    };
+
+    const handleCustomEmail = async (e) => {
+      e.preventDefault();
+      try {
+        const emailList = customEmailForm.recipient_emails
+          .split(',')
+          .map(email => email.trim())
+          .filter(email => email);
+
+        const response = await fetch(`${backendUrl}/api/admin/send-custom-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...customEmailForm,
+            recipient_emails: emailList
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          alert(`Custom email sent successfully! ${data.sent_count} emails sent, ${data.failed_count} failed.`);
+          setShowCustomModal(false);
+          setCustomEmailForm({ subject: '', message: '', recipient_emails: '' });
+          fetchEmailCampaigns();
+        } else {
+          alert('Error sending custom email');
+        }
+      } catch (error) {
+        alert('Error sending custom email');
+      }
+    };
+
+    return (
+      <div className="email-management">
+        <div className="management-header">
+          <h2>📧 Email Marketing & Communication</h2>
+          <div className="email-actions">
+            <button 
+              className="bulk-email-btn"
+              onClick={() => setShowBulkModal(true)}
+            >
+              📢 Send Bulk Email
+            </button>
+            <button 
+              className="custom-email-btn"
+              onClick={() => setShowCustomModal(true)}
+            >
+              ✉️ Send Custom Email
+            </button>
+          </div>
+        </div>
+
+        <div className="email-stats">
+          <div className="stat-card">
+            <h3>{users.length}</h3>
+            <p>Total Users</p>
+          </div>
+          <div className="stat-card">
+            <h3>{users.filter(u => u.role !== 'admin').length}</h3>
+            <p>Customers</p>
+          </div>
+          <div className="stat-card">
+            <h3>{campaigns.length}</h3>
+            <p>Email Campaigns</p>
+          </div>
+        </div>
+
+        <div className="campaigns-history">
+          <h3>📈 Email Campaign History</h3>
+          <div className="campaigns-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Subject</th>
+                  <th>Recipients</th>
+                  <th>Sent</th>
+                  <th>Failed</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaigns.map(campaign => (
+                  <tr key={campaign._id}>
+                    <td>
+                      <span className={`campaign-type ${campaign.type}`}>
+                        {campaign.type === 'bulk' ? '📢 Bulk' : '✉️ Custom'}
+                      </span>
+                    </td>
+                    <td>{campaign.subject}</td>
+                    <td>{campaign.total_recipients}</td>
+                    <td className="success-count">{campaign.sent_count}</td>
+                    <td className="error-count">{campaign.failed_count}</td>
+                    <td>{new Date(campaign.sent_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Bulk Email Modal */}
+        {showBulkModal && (
+          <div className="modal-overlay">
+            <div className="modal email-modal">
+              <div className="modal-header">
+                <h3>📢 Send Bulk Email</h3>
+                <button onClick={() => setShowBulkModal(false)}>×</button>
+              </div>
+              <form onSubmit={handleBulkEmail} className="email-form">
+                <div className="form-group">
+                  <label>📋 Recipient Group</label>
+                  <select
+                    value={bulkEmailForm.recipient_type}
+                    onChange={(e) => setBulkEmailForm({...bulkEmailForm, recipient_type: e.target.value})}
+                    required
+                  >
+                    <option value="all">All Users ({users.length})</option>
+                    <option value="customers">Customers Only ({users.filter(u => u.role !== 'admin').length})</option>
+                    <option value="admins">Admins Only ({users.filter(u => u.role === 'admin').length})</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>📝 Email Subject</label>
+                  <input
+                    type="text"
+                    value={bulkEmailForm.subject}
+                    onChange={(e) => setBulkEmailForm({...bulkEmailForm, subject: e.target.value})}
+                    placeholder="Enter email subject..."
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>💬 Email Message</label>
+                  <textarea
+                    value={bulkEmailForm.message}
+                    onChange={(e) => setBulkEmailForm({...bulkEmailForm, message: e.target.value})}
+                    placeholder="Write your message here... (HTML supported)"
+                    rows="8"
+                    required
+                  />
+                  <p className="help-text">💡 Tip: You can use HTML formatting in your message</p>
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" className="send-btn">
+                    📤 Send Bulk Email
+                  </button>
+                  <button type="button" onClick={() => setShowBulkModal(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Email Modal */}
+        {showCustomModal && (
+          <div className="modal-overlay">
+            <div className="modal email-modal">
+              <div className="modal-header">
+                <h3>✉️ Send Custom Email</h3>
+                <button onClick={() => setShowCustomModal(false)}>×</button>
+              </div>
+              <form onSubmit={handleCustomEmail} className="email-form">
+                <div className="form-group">
+                  <label>👥 Recipient Emails</label>
+                  <textarea
+                    value={customEmailForm.recipient_emails}
+                    onChange={(e) => setCustomEmailForm({...customEmailForm, recipient_emails: e.target.value})}
+                    placeholder="Enter email addresses separated by commas...&#10;Example: user1@email.com, user2@email.com"
+                    rows="3"
+                    required
+                  />
+                  <p className="help-text">📧 Separate multiple emails with commas</p>
+                </div>
+
+                <div className="form-group">
+                  <label>📝 Email Subject</label>
+                  <input
+                    type="text"
+                    value={customEmailForm.subject}
+                    onChange={(e) => setCustomEmailForm({...customEmailForm, subject: e.target.value})}
+                    placeholder="Enter email subject..."
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>💬 Email Message</label>
+                  <textarea
+                    value={customEmailForm.message}
+                    onChange={(e) => setCustomEmailForm({...customEmailForm, message: e.target.value})}
+                    placeholder="Write your personalized message here... (HTML supported)"
+                    rows="8"
+                    required
+                  />
+                  <p className="help-text">💡 Tip: You can use HTML formatting in your message</p>
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" className="send-btn">
+                    📤 Send Custom Email
+                  </button>
+                  <button type="button" onClick={() => setShowCustomModal(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderContent = () => {
     switch (activeTab) {
