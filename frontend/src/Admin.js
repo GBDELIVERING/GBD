@@ -270,7 +270,7 @@ const Admin = () => {
               <div className="product-info">
                 <h3>{product.name}</h3>
                 <p className="product-category">{product.category}</p>
-                <p className="product-price">${product.price}</p>
+                <p className="product-price">RWF {product.price.toLocaleString()}</p>
                 <p className="product-stock">Stock: {product.stock}</p>
                 <div className="product-actions">
                   <button onClick={() => handleEdit(product)}>Edit</button>
