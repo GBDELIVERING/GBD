@@ -2834,3 +2834,369 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
 }
+
+/* Advanced E-commerce Styles */
+.advanced-ecommerce {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.ecommerce-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 12px;
+}
+
+.ecommerce-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 2rem;
+}
+
+.ecommerce-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.ecommerce-navigation {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  overflow-x: auto;
+}
+
+.ecom-tab {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  color: #374151;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.ecom-tab:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.ecom-tab.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border-color: #3b82f6;
+}
+
+.ecommerce-content {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Feature Grid */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.feature-card {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 25px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.feature-card h4 {
+  margin: 0 0 15px 0;
+  color: #1e293b;
+  font-size: 1.2rem;
+}
+
+.feature-card p {
+  margin: 0 0 20px 0;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.feature-btn {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.feature-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+/* Coupons Management */
+.coupons-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.coupons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.coupon-card {
+  background: linear-gradient(135deg, #fff7ed, #fef3c7);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.coupon-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+}
+
+.coupon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.coupon-header h4 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #92400e;
+  font-family: 'Courier New', monospace;
+}
+
+.coupon-status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.coupon-status.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.coupon-status.inactive {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.coupon-details p {
+  margin: 8px 0;
+  color: #78350f;
+  font-size: 0.9rem;
+}
+
+.coupon-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* Analytics Dashboard */
+.analytics-dashboard h3 {
+  margin: 0 0 25px 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.analytics-card {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border-radius: 12px;
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+.analytics-card:hover {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.analytics-icon {
+  font-size: 2.5rem;
+  background: white;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.analytics-content h4 {
+  margin: 0 0 8px 0;
+  color: #374151;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.analytics-value {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+/* Recent Orders */
+.recent-orders {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 25px;
+  border: 1px solid #e2e8f0;
+}
+
+.recent-orders h4 {
+  margin: 0 0 20px 0;
+  color: #374151;
+  font-size: 1.2rem;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.order-item {
+  background: white;
+  border-radius: 8px;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.order-item:hover {
+  background: #f9fafb;
+  border-color: #3b82f6;
+}
+
+.order-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.order-id {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #374151;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.order-amount {
+  font-weight: bold;
+  color: #059669;
+  font-size: 1.1rem;
+}
+
+.order-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.order-date {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.order-status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.order-status.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.order-status.confirmed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.order-status.delivered {
+  background: #dcfce7;
+  color: #059669;
+}
+
+@media (max-width: 768px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .coupons-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ecommerce-navigation {
+    flex-direction: column;
+  }
+  
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
