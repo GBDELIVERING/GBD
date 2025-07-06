@@ -473,11 +473,16 @@ const Admin = () => {
                   <th>✏️ Edit</th>
                   <th>🖼️ Image</th>
                   <th>📦 Name</th>
+                  <th>📝 Description</th>
                   <th>🏷️ Category</th>
                   <th>💰 Price (RWF)</th>
                   <th>📊 Stock</th>
+                  <th>⚖️ Weight</th>
                   <th>📏 Unit</th>
+                  <th>📉 Min Qty</th>
+                  <th>📈 Max Qty</th>
                   <th>🏷️ Discount %</th>
+                  <th>🔖 SKU</th>
                   <th>⭐ Status</th>
                   <th>🔧 Actions</th>
                 </tr>
