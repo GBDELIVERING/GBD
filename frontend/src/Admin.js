@@ -140,7 +140,7 @@ const Admin = () => {
               {orders.slice(0, 5).map(order => (
                 <div key={order._id} className="activity-item">
                   <span className="activity-title">Order #{order.order_id?.substring(0, 8)}</span>
-                  <span className="activity-amount">${order.total_amount?.toFixed(2)}</span>
+                  <span className="activity-amount">RWF {order.total_amount?.toLocaleString()}</span>
                 </div>
               ))}
             </div>
