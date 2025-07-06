@@ -2981,6 +2981,552 @@ const Admin = () => {
     );
   };
 
+  const UXBuilder = () => {
+    const [pages, setPages] = useState([]);
+    const [currentPage, setCurrentPage] = useState(null);
+    const [components, setComponents] = useState([]);
+    const [selectedComponent, setSelectedComponent] = useState(null);
+    const [showPageModal, setShowPageModal] = useState(false);
+    const [draggedComponent, setDraggedComponent] = useState(null);
+    const [previewMode, setPreviewMode] = useState(false);
+
+    const componentLibrary = [
+      { type: 'text', name: 'Text Block', icon: '📝', description: 'Add text content' },
+      { type: 'heading', name: 'Heading', icon: '📰', description: 'Add headings (H1-H6)' },
+      { type: 'image', name: 'Image', icon: '🖼️', description: 'Add images' },
+      { type: 'button', name: 'Button', icon: '🔘', description: 'Add call-to-action buttons' },
+      { type: 'container', name: 'Container', icon: '📦', description: 'Group elements together' },
+      { type: 'grid', name: 'Grid Layout', icon: '⚏', description: 'Create responsive grid' },
+      { type: 'spacer', name: 'Spacer', icon: '📏', description: 'Add spacing between elements' },
+      { type: 'divider', name: 'Divider', icon: '➖', description: 'Add visual dividers' },
+      { type: 'form', name: 'Form', icon: '📋', description: 'Add contact forms' },
+      { type: 'video', name: 'Video', icon: '🎥', description: 'Embed videos' }
+    ];
+
+    useEffect(() => {
+      fetchPages();
+    }, []);
+
+    const fetchPages = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/builder/pages`);
+        if (response.ok) {
+          const data = await response.json();
+          setPages(data.pages || []);
+        }
+      } catch (error) {
+        console.error('Error fetching pages:', error);
+      }
+    };
+
+    const createNewPage = async (pageData) => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/builder/pages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...pageData,
+            components: []
+          })
+        });
+
+        if (response.ok) {
+          fetchPages();
+          setShowPageModal(false);
+        }
+      } catch (error) {
+        alert('Error creating page');
+      }
+    };
+
+    const loadPage = async (pageId) => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/builder/pages/${pageId}`);
+        if (response.ok) {
+          const page = await response.json();
+          setCurrentPage(page);
+          setComponents(page.components || []);
+        }
+      } catch (error) {
+        console.error('Error loading page:', error);
+      }
+    };
+
+    const savePage = async () => {
+      if (!currentPage) return;
+
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/builder/pages/${currentPage._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...currentPage,
+            components
+          })
+        });
+
+        if (response.ok) {
+          alert('Page saved successfully!');
+        }
+      } catch (error) {
+        alert('Error saving page');
+      }
+    };
+
+    const addComponent = (componentType, position = { x: 50, y: 50 }) => {
+      const newComponent = {
+        component_id: `comp_${Date.now()}`,
+        type: componentType,
+        properties: getDefaultProperties(componentType),
+        styles: getDefaultStyles(componentType),
+        position: { ...position, width: 300, height: 100 },
+        order: components.length
+      };
+
+      setComponents([...components, newComponent]);
+    };
+
+    const getDefaultProperties = (type) => {
+      switch (type) {
+        case 'text':
+          return { content: 'Edit this text...', fontSize: '16px' };
+        case 'heading':
+          return { content: 'Your Heading', level: 'h2', fontSize: '24px' };
+        case 'image':
+          return { src: 'https://via.placeholder.com/300x200', alt: 'Image' };
+        case 'button':
+          return { text: 'Click Me', link: '#', backgroundColor: '#3b82f6' };
+        case 'container':
+          return { backgroundColor: '#f8fafc', padding: '20px' };
+        case 'grid':
+          return { columns: 2, gap: '20px' };
+        case 'spacer':
+          return { height: '50px' };
+        case 'divider':
+          return { thickness: '1px', color: '#e5e7eb' };
+        case 'form':
+          return { fields: ['name', 'email', 'message'], submitText: 'Submit' };
+        case 'video':
+          return { src: '', autoplay: false, controls: true };
+        default:
+          return {};
+      }
+    };
+
+    const getDefaultStyles = (type) => {
+      return {
+        padding: '10px',
+        margin: '5px',
+        borderRadius: '4px',
+        backgroundColor: type === 'container' ? '#f8fafc' : 'transparent'
+      };
+    };
+
+    const updateComponent = (componentId, updates) => {
+      setComponents(components.map(comp => 
+        comp.component_id === componentId 
+          ? { ...comp, ...updates }
+          : comp
+      ));
+    };
+
+    const deleteComponent = (componentId) => {
+      setComponents(components.filter(comp => comp.component_id !== componentId));
+      setSelectedComponent(null);
+    };
+
+    const handleDragStart = (e, componentType) => {
+      setDraggedComponent(componentType);
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      if (draggedComponent) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const position = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+        addComponent(draggedComponent, position);
+        setDraggedComponent(null);
+      }
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+    };
+
+    const renderComponent = (component) => {
+      const { type, properties, styles, position } = component;
+      
+      const componentStyle = {
+        position: 'absolute',
+        left: position.x,
+        top: position.y,
+        width: position.width,
+        height: type === 'spacer' ? properties.height : position.height,
+        cursor: previewMode ? 'default' : 'pointer',
+        border: selectedComponent?.component_id === component.component_id ? '2px solid #3b82f6' : '1px dashed #e5e7eb',
+        ...styles
+      };
+
+      switch (type) {
+        case 'text':
+          return (
+            <div
+              key={component.component_id}
+              style={componentStyle}
+              onClick={() => !previewMode && setSelectedComponent(component)}
+            >
+              <p style={{ fontSize: properties.fontSize, margin: 0 }}>
+                {properties.content}
+              </p>
+            </div>
+          );
+        case 'heading':
+          const HeadingTag = properties.level || 'h2';
+          return (
+            <div
+              key={component.component_id}
+              style={componentStyle}
+              onClick={() => !previewMode && setSelectedComponent(component)}
+            >
+              <HeadingTag style={{ fontSize: properties.fontSize, margin: 0 }}>
+                {properties.content}
+              </HeadingTag>
+            </div>
+          );
+        case 'image':
+          return (
+            <div
+              key={component.component_id}
+              style={componentStyle}
+              onClick={() => !previewMode && setSelectedComponent(component)}
+            >
+              <img
+                src={properties.src}
+                alt={properties.alt}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+          );
+        case 'button':
+          return (
+            <div
+              key={component.component_id}
+              style={componentStyle}
+              onClick={() => !previewMode && setSelectedComponent(component)}
+            >
+              <button
+                style={{
+                  backgroundColor: properties.backgroundColor,
+                  color: 'white',
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                {properties.text}
+              </button>
+            </div>
+          );
+        case 'container':
+          return (
+            <div
+              key={component.component_id}
+              style={componentStyle}
+              onClick={() => !previewMode && setSelectedComponent(component)}
+            >
+              <div style={{ padding: properties.padding, height: '100%' }}>
+                Container - Drop components here
+              </div>
+            </div>
+          );
+        case 'spacer':
+          return (
+            <div
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                backgroundColor: previewMode ? 'transparent' : 'rgba(59, 130, 246, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                color: '#6b7280'
+              }}
+              onClick={() => !previewMode && setSelectedComponent(component)}
+            >
+              {!previewMode && 'Spacer'}
+            </div>
+          );
+        default:
+          return (
+            <div
+              key={component.component_id}
+              style={componentStyle}
+              onClick={() => !previewMode && setSelectedComponent(component)}
+            >
+              {type} component
+            </div>
+          );
+      }
+    };
+
+    return (
+      <div className="ux-builder">
+        <div className="builder-header">
+          <div className="builder-info">
+            <h2>🎨 UX Builder</h2>
+            {currentPage && (
+              <span className="current-page">Editing: {currentPage.name}</span>
+            )}
+          </div>
+          <div className="builder-actions">
+            <button onClick={() => setShowPageModal(true)} className="new-page-btn">
+              ➕ New Page
+            </button>
+            <button 
+              onClick={() => setPreviewMode(!previewMode)}
+              className={`preview-btn ${previewMode ? 'active' : ''}`}
+            >
+              {previewMode ? '✏️ Edit' : '👁️ Preview'}
+            </button>
+            {currentPage && (
+              <button onClick={savePage} className="save-btn">
+                💾 Save Page
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="builder-workspace">
+          {/* Component Library Sidebar */}
+          {!previewMode && (
+            <div className="component-library">
+              <h3>Components</h3>
+              <div className="component-grid">
+                {componentLibrary.map(comp => (
+                  <div
+                    key={comp.type}
+                    className="component-item"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, comp.type)}
+                    onClick={() => addComponent(comp.type)}
+                  >
+                    <span className="component-icon">{comp.icon}</span>
+                    <span className="component-name">{comp.name}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Page List */}
+              <div className="page-list">
+                <h4>Pages</h4>
+                {pages.map(page => (
+                  <div
+                    key={page._id}
+                    className={`page-item ${currentPage?._id === page._id ? 'active' : ''}`}
+                    onClick={() => loadPage(page._id)}
+                  >
+                    {page.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Canvas */}
+          <div className="canvas-container">
+            <div
+              className="canvas"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              style={{
+                width: '100%',
+                minHeight: '600px',
+                backgroundColor: '#ffffff',
+                position: 'relative',
+                border: previewMode ? 'none' : '2px dashed #d1d5db'
+              }}
+            >
+              {components.map(renderComponent)}
+              {!currentPage && (
+                <div className="canvas-placeholder">
+                  <h3>Select a page to start editing</h3>
+                  <p>Choose a page from the sidebar or create a new one</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Properties Panel */}
+          {!previewMode && selectedComponent && (
+            <div className="properties-panel">
+              <h3>Properties</h3>
+              <div className="property-group">
+                <label>Component ID</label>
+                <input
+                  type="text"
+                  value={selectedComponent.component_id}
+                  disabled
+                />
+              </div>
+              
+              {selectedComponent.type === 'text' && (
+                <>
+                  <div className="property-group">
+                    <label>Content</label>
+                    <textarea
+                      value={selectedComponent.properties.content}
+                      onChange={(e) => updateComponent(selectedComponent.component_id, {
+                        properties: { ...selectedComponent.properties, content: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="property-group">
+                    <label>Font Size</label>
+                    <input
+                      type="text"
+                      value={selectedComponent.properties.fontSize}
+                      onChange={(e) => updateComponent(selectedComponent.component_id, {
+                        properties: { ...selectedComponent.properties, fontSize: e.target.value }
+                      })}
+                    />
+                  </div>
+                </>
+              )}
+
+              {selectedComponent.type === 'heading' && (
+                <>
+                  <div className="property-group">
+                    <label>Content</label>
+                    <input
+                      type="text"
+                      value={selectedComponent.properties.content}
+                      onChange={(e) => updateComponent(selectedComponent.component_id, {
+                        properties: { ...selectedComponent.properties, content: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="property-group">
+                    <label>Heading Level</label>
+                    <select
+                      value={selectedComponent.properties.level}
+                      onChange={(e) => updateComponent(selectedComponent.component_id, {
+                        properties: { ...selectedComponent.properties, level: e.target.value }
+                      })}
+                    >
+                      <option value="h1">H1</option>
+                      <option value="h2">H2</option>
+                      <option value="h3">H3</option>
+                      <option value="h4">H4</option>
+                      <option value="h5">H5</option>
+                      <option value="h6">H6</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {selectedComponent.type === 'button' && (
+                <>
+                  <div className="property-group">
+                    <label>Button Text</label>
+                    <input
+                      type="text"
+                      value={selectedComponent.properties.text}
+                      onChange={(e) => updateComponent(selectedComponent.component_id, {
+                        properties: { ...selectedComponent.properties, text: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="property-group">
+                    <label>Link</label>
+                    <input
+                      type="url"
+                      value={selectedComponent.properties.link}
+                      onChange={(e) => updateComponent(selectedComponent.component_id, {
+                        properties: { ...selectedComponent.properties, link: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="property-group">
+                    <label>Background Color</label>
+                    <input
+                      type="color"
+                      value={selectedComponent.properties.backgroundColor}
+                      onChange={(e) => updateComponent(selectedComponent.component_id, {
+                        properties: { ...selectedComponent.properties, backgroundColor: e.target.value }
+                      })}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="property-actions">
+                <button
+                  onClick={() => deleteComponent(selectedComponent.component_id)}
+                  className="delete-component-btn"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* New Page Modal */}
+        {showPageModal && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <div className="modal-header">
+                <h3>Create New Page</h3>
+                <button onClick={() => setShowPageModal(false)}>×</button>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                createNewPage({
+                  page_id: formData.get('page_id'),
+                  name: formData.get('name'),
+                  slug: formData.get('slug'),
+                  title: formData.get('title'),
+                  meta_description: formData.get('meta_description')
+                });
+              }}>
+                <div className="form-group">
+                  <label>Page Name</label>
+                  <input type="text" name="name" required />
+                </div>
+                <div className="form-group">
+                  <label>Page ID</label>
+                  <input type="text" name="page_id" required />
+                </div>
+                <div className="form-group">
+                  <label>URL Slug</label>
+                  <input type="text" name="slug" required />
+                </div>
+                <div className="form-group">
+                  <label>Page Title</label>
+                  <input type="text" name="title" />
+                </div>
+                <div className="form-group">
+                  <label>Meta Description</label>
+                  <textarea name="meta_description" rows="3"></textarea>
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="create-btn">Create Page</button>
+                  <button type="button" onClick={() => setShowPageModal(false)}>Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const FrontendThemeCustomization = () => {
     const [themeSettings, setThemeSettings] = useState({
       primaryColor: '#3b82f6',
