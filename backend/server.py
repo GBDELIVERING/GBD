@@ -399,6 +399,30 @@ class SectionContent(BaseModel):
     order: int = 0
     active: bool = True
 
+# Maintenance mode middleware
+@app.middleware("http")
+async def maintenance_mode_middleware(request: Request, call_next):
+    # Check if maintenance mode is enabled
+    if request.url.path not in ["/api/admin/maintenance", "/api/admin/ecommerce-settings"] and not request.url.path.startswith("/api/admin"):
+        settings = await db.ecommerce_settings.find_one({"type": "main"})
+        if settings and settings.get("maintenance_mode", False):
+            # Allow admin to bypass maintenance mode
+            auth_header = request.headers.get("authorization")
+            if not auth_header or not auth_header.startswith("Bearer "):
+                return JSONResponse(
+                    status_code=503,
+                    content={
+                        "maintenance": True,
+                        "title": "Site Under Maintenance",
+                        "message": settings.get("maintenance_message", "We are currently performing scheduled maintenance. Please check back soon!"),
+                        "estimated_time": settings.get("estimated_time"),
+                        "contact_email": settings.get("contact_email")
+                    }
+                )
+    
+    response = await call_next(request)
+    return response
+
 # Helper Functions
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
