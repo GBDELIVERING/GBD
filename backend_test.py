@@ -418,6 +418,7 @@ def test_orders(token, product_id):
         record_test("Get Orders", True, f"Retrieved {len(orders)} orders", response)
     else:
         record_test("Get Orders", False, "Failed to get orders", response)
+        record_test("Get Orders", False, "Failed to get orders", response)
 
 # Run all tests
 def run_tests():
