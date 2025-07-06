@@ -1937,6 +1937,328 @@ const Admin = () => {
     );
   };
 
+  const SliderManagement = () => {
+    const [sliders, setSliders] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [editingSlider, setEditingSlider] = useState(null);
+    const [imageFile, setImageFile] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [sliderForm, setSliderForm] = useState({
+      title: '',
+      subtitle: '',
+      description: '',
+      image_url: '',
+      button_text: '',
+      button_link: '',
+      order: 0,
+      active: true
+    });
+
+    useEffect(() => {
+      fetchSliders();
+    }, []);
+
+    const fetchSliders = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/sliders`);
+        if (response.ok) {
+          const data = await response.json();
+          setSliders(data.sliders || []);
+        }
+      } catch (error) {
+        console.error('Error fetching sliders:', error);
+      }
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      let imageUrl = sliderForm.image_url;
+      
+      // Upload image if file is selected
+      if (imageFile) {
+        imageUrl = await handleImageUpload(imageFile);
+        if (!imageUrl) return; // Upload failed
+      }
+      
+      try {
+        const url = editingSlider 
+          ? `${backendUrl}/api/admin/sliders/${editingSlider._id}`
+          : `${backendUrl}/api/admin/sliders`;
+        
+        const method = editingSlider ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...sliderForm,
+            image_url: imageUrl,
+            order: parseInt(sliderForm.order)
+          })
+        });
+
+        if (response.ok) {
+          alert(editingSlider ? 'Slider updated successfully!' : 'Slider created successfully!');
+          setShowModal(false);
+          setEditingSlider(null);
+          setImageFile(null);
+          resetForm();
+          fetchSliders();
+        }
+      } catch (error) {
+        alert('Error saving slider');
+      }
+    };
+
+    const handleImageUpload = async (file) => {
+      if (!file) return null;
+      
+      setUploadingImage(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`${backendUrl}/api/admin/upload-image`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUploadingImage(false);
+          return data.image_url;
+        } else {
+          throw new Error('Upload failed');
+        }
+      } catch (error) {
+        setUploadingImage(false);
+        alert('Error uploading image: ' + error.message);
+        return null;
+      }
+    };
+
+    const resetForm = () => {
+      setSliderForm({
+        title: '', subtitle: '', description: '', image_url: '',
+        button_text: '', button_link: '', order: 0, active: true
+      });
+    };
+
+    const handleEdit = (slider) => {
+      setEditingSlider(slider);
+      setSliderForm({
+        title: slider.title,
+        subtitle: slider.subtitle || '',
+        description: slider.description || '',
+        image_url: slider.image_url || '',
+        button_text: slider.button_text || '',
+        button_link: slider.button_link || '',
+        order: slider.order,
+        active: slider.active
+      });
+      setShowModal(true);
+    };
+
+    const handleDelete = async (sliderId) => {
+      if (window.confirm('Are you sure you want to delete this slider?')) {
+        try {
+          const response = await fetch(`${backendUrl}/api/admin/sliders/${sliderId}`, {
+            method: 'DELETE'
+          });
+          if (response.ok) {
+            alert('Slider deleted successfully!');
+            fetchSliders();
+          }
+        } catch (error) {
+          alert('Error deleting slider');
+        }
+      }
+    };
+
+    return (
+      <div className="slider-management">
+        <div className="management-header">
+          <h2>🖼️ Slider Management</h2>
+          <button 
+            className="add-btn"
+            onClick={() => setShowModal(true)}
+          >
+            ➕ Add New Slider
+          </button>
+        </div>
+
+        <div className="sliders-grid">
+          {sliders.map(slider => (
+            <div key={slider._id} className="slider-card">
+              <div className="slider-preview">
+                <img src={slider.image_url} alt={slider.title} className="slider-image" />
+                <div className="slider-overlay">
+                  <h3>{slider.title}</h3>
+                  {slider.subtitle && <h4>{slider.subtitle}</h4>}
+                  {slider.description && <p>{slider.description}</p>}
+                  {slider.button_text && (
+                    <button className="preview-btn">{slider.button_text}</button>
+                  )}
+                </div>
+              </div>
+              <div className="slider-info">
+                <div className="slider-meta">
+                  <span className="order-badge">Order: {slider.order}</span>
+                  <span className={`status-badge ${slider.active ? 'active' : 'inactive'}`}>
+                    {slider.active ? '✅ Active' : '❌ Inactive'}
+                  </span>
+                </div>
+                <div className="slider-actions">
+                  <button 
+                    onClick={() => handleEdit(slider)} 
+                    className="edit-btn"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(slider._id)} 
+                    className="delete-btn"
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add/Edit Slider Modal */}
+        {showModal && (
+          <div className="modal-overlay">
+            <div className="modal large-modal">
+              <div className="modal-header">
+                <h3>{editingSlider ? '✏️ Edit Slider' : '➕ Add New Slider'}</h3>
+                <button onClick={() => {
+                  setShowModal(false);
+                  setEditingSlider(null);
+                  setImageFile(null);
+                  resetForm();
+                }}>×</button>
+              </div>
+              <form onSubmit={handleSubmit} className="slider-form">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Title</label>
+                    <input
+                      type="text"
+                      value={sliderForm.title}
+                      onChange={(e) => setSliderForm({...sliderForm, title: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Subtitle (Optional)</label>
+                    <input
+                      type="text"
+                      value={sliderForm.subtitle}
+                      onChange={(e) => setSliderForm({...sliderForm, subtitle: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Description (Optional)</label>
+                  <textarea
+                    value={sliderForm.description}
+                    onChange={(e) => setSliderForm({...sliderForm, description: e.target.value})}
+                    rows="3"
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Button Text (Optional)</label>
+                    <input
+                      type="text"
+                      value={sliderForm.button_text}
+                      onChange={(e) => setSliderForm({...sliderForm, button_text: e.target.value})}
+                      placeholder="Shop Now, Learn More, etc."
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Button Link (Optional)</label>
+                    <input
+                      type="url"
+                      value={sliderForm.button_link}
+                      onChange={(e) => setSliderForm({...sliderForm, button_link: e.target.value})}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Display Order</label>
+                    <input
+                      type="number"
+                      value={sliderForm.order}
+                      onChange={(e) => setSliderForm({...sliderForm, order: e.target.value})}
+                      min="0"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select
+                      value={sliderForm.active}
+                      onChange={(e) => setSliderForm({...sliderForm, active: e.target.value === 'true'})}
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>🖼️ Slider Image</label>
+                  <div className="image-upload-section">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setImageFile(e.target.files[0])}
+                      className="file-input"
+                    />
+                    {imageFile && (
+                      <div className="image-preview">
+                        <img 
+                          src={URL.createObjectURL(imageFile)} 
+                          alt="Preview" 
+                          className="preview-image"
+                        />
+                        <p>Selected: {imageFile.name}</p>
+                      </div>
+                    )}
+                    {sliderForm.image_url && !imageFile && (
+                      <div className="current-image">
+                        <img src={sliderForm.image_url} alt="Current" className="preview-image" />
+                        <p>Current image</p>
+                      </div>
+                    )}
+                    <p className="help-text">📁 Upload slider image (recommended: 1920x600px)</p>
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" className="submit-btn" disabled={uploadingImage}>
+                    {uploadingImage ? '⏳ Uploading...' : (editingSlider ? '💾 Update Slider' : '➕ Create Slider')}
+                  </button>
+                  <button type="button" onClick={() => setShowModal(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const FrontendThemeCustomization = () => {
     const [themeSettings, setThemeSettings] = useState({
       primaryColor: '#3b82f6',
