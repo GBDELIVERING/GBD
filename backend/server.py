@@ -525,6 +525,63 @@ async def get_orders(current_user: dict = Depends(get_current_user)):
     
     return {"orders": orders}
 
+# Admin Routes
+@app.get("/api/admin/orders")
+async def get_all_orders():
+    """Get all orders for admin"""
+    orders = await db.orders.find({}).to_list(1000)
+    for order in orders:
+        order["_id"] = str(order["_id"])
+    
+    return {"orders": orders}
+
+@app.get("/api/admin/users")
+async def get_all_users():
+    """Get all users for admin"""
+    users = await db.users.find({}).to_list(1000)
+    for user in users:
+        user["_id"] = str(user["_id"])
+        # Remove password from response
+        user.pop("password", None)
+    
+    return {"users": users}
+
+@app.get("/api/admin/payments")
+async def get_all_payments():
+    """Get all payment transactions for admin"""
+    payments = await db.payment_transactions.find({}).to_list(1000)
+    for payment in payments:
+        if "_id" in payment:
+            payment["_id"] = str(payment["_id"])
+    
+    return {"payments": payments}
+
+@app.put("/api/admin/products/{product_id}")
+async def update_product(product_id: str, product: Product):
+    """Update product for admin"""
+    product_data = product.dict()
+    product_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.products.update_one(
+        {"_id": ObjectId(product_id)},
+        {"$set": product_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {"message": "Product updated successfully"}
+
+@app.delete("/api/admin/products/{product_id}")
+async def delete_product(product_id: str):
+    """Delete product for admin"""
+    result = await db.products.delete_one({"_id": ObjectId(product_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {"message": "Product deleted successfully"}
+
 # Initialize sample data
 @app.on_event("startup")
 async def startup_event():
