@@ -3602,6 +3602,368 @@ const Admin = () => {
             </div>
           );
 
+        case 'product_grid':
+          return (
+            <section
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                padding: '40px 20px',
+                backgroundColor: '#f8fafc'
+              }}
+              onClick={handleComponentClick}
+            >
+              <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '2rem', fontWeight: 'bold' }}>
+                  {properties.title}
+                </h2>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: `repeat(${properties.columns}, 1fr)`, 
+                  gap: '20px' 
+                }}>
+                  {[1,2,3,4,5,6,7,8].slice(0, properties.columns * 2).map(i => (
+                    <div key={i} style={{ 
+                      background: 'white', 
+                      borderRadius: '12px', 
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.3s ease'
+                    }}>
+                      <img 
+                        src={`https://images.unsplash.com/photo-150574042092${i}-5e560c06d30e?w=300&h=300&fit=crop`}
+                        alt={`Product ${i}`}
+                        style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                      />
+                      <div style={{ padding: '15px' }}>
+                        <h3 style={{ margin: '0 0 10px', fontSize: '1.1rem' }}>Product {i}</h3>
+                        {properties.showPrice && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#059669' }}>
+                              RWF {(29.99 * i).toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: '0.9rem', textDecoration: 'line-through', color: '#6b7280' }}>
+                              RWF {(39.99 * i).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        {properties.showRating && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '15px' }}>
+                            <span>⭐⭐⭐⭐⭐</span>
+                            <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>(128)</span>
+                          </div>
+                        )}
+                        <button style={{
+                          width: '100%',
+                          background: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          padding: '10px',
+                          borderRadius: '6px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}>
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'product_card':
+          return (
+            <div
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                background: 'white',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                transition: 'transform 0.3s ease'
+              }}
+              onClick={handleComponentClick}
+            >
+              <div style={{ position: 'relative' }}>
+                <img 
+                  src={properties.image}
+                  alt={properties.productName}
+                  style={{ width: '100%', height: '250px', objectFit: 'cover' }}
+                />
+                {properties.discount > 0 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    background: '#ef4444',
+                    color: 'white',
+                    padding: '5px 10px',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold'
+                  }}>
+                    -{properties.discount}%
+                  </div>
+                )}
+              </div>
+              <div style={{ padding: '20px' }}>
+                <h3 style={{ margin: '0 0 10px', fontSize: '1.2rem', fontWeight: '600' }}>
+                  {properties.productName}
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#059669' }}>
+                    RWF {properties.price}
+                  </span>
+                  {properties.originalPrice > properties.price && (
+                    <span style={{ fontSize: '1rem', textDecoration: 'line-through', color: '#6b7280' }}>
+                      RWF {properties.originalPrice}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '15px' }}>
+                  <span>⭐⭐⭐⭐⭐</span>
+                  <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>({properties.reviews})</span>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button style={{
+                    flex: 1,
+                    background: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}>
+                    Add to Cart
+                  </button>
+                  {properties.quickView && (
+                    <button style={{
+                      background: '#f3f4f6',
+                      color: '#374151',
+                      border: 'none',
+                      padding: '12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}>
+                      👁️
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+
+        case 'featured_products':
+          return (
+            <section
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                padding: '60px 20px',
+                backgroundColor: 'white'
+              }}
+              onClick={handleComponentClick}
+            >
+              <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+                <h2 style={{ margin: '0 0 10px', fontSize: '2.5rem', fontWeight: 'bold' }}>
+                  {properties.title}
+                </h2>
+                <p style={{ margin: '0 0 40px', fontSize: '1.1rem', color: '#6b7280' }}>
+                  {properties.subtitle}
+                </p>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+                  gap: '30px' 
+                }}>
+                  {[1,2,3,4,5,6].slice(0, properties.productsToShow).map(i => (
+                    <div key={i} style={{ 
+                      background: '#f8fafc', 
+                      borderRadius: '15px', 
+                      overflow: 'hidden',
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
+                      position: 'relative'
+                    }}>
+                      {properties.showBadge && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '15px',
+                          left: '15px',
+                          background: '#f59e0b',
+                          color: 'white',
+                          padding: '6px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          fontWeight: 'bold',
+                          zIndex: 1
+                        }}>
+                          {properties.badgeText}
+                        </div>
+                      )}
+                      <img 
+                        src={`https://images.unsplash.com/photo-150574042092${i}-5e560c06d30e?w=300&h=300&fit=crop`}
+                        alt={`Featured Product ${i}`}
+                        style={{ width: '100%', height: '220px', objectFit: 'cover' }}
+                      />
+                      <div style={{ padding: '20px' }}>
+                        <h3 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: '600' }}>
+                          Featured Product {i}
+                        </h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                          <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#059669' }}>
+                            RWF {(59.99 * i).toFixed(2)}
+                          </span>
+                          <span style={{ fontSize: '1rem', textDecoration: 'line-through', color: '#6b7280' }}>
+                            RWF {(79.99 * i).toFixed(2)}
+                          </span>
+                        </div>
+                        <button style={{
+                          width: '100%',
+                          background: '#059669',
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          fontSize: '1rem'
+                        }}>
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'sale_banner':
+          return (
+            <section
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                backgroundColor: properties.backgroundColor,
+                color: properties.textColor,
+                padding: '60px 20px',
+                textAlign: 'center',
+                backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%, rgba(255,255,255,0.1))',
+                backgroundSize: '30px 30px'
+              }}
+              onClick={handleComponentClick}
+            >
+              <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <h2 style={{ 
+                  margin: '0 0 15px', 
+                  fontSize: '3rem', 
+                  fontWeight: 'bold',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+                }}>
+                  {properties.title}
+                </h2>
+                <p style={{ 
+                  margin: '0 0 10px', 
+                  fontSize: '1.5rem', 
+                  fontWeight: '600',
+                  opacity: 0.9
+                }}>
+                  {properties.subtitle}
+                </p>
+                <p style={{ 
+                  margin: '0 0 30px', 
+                  fontSize: '1.1rem',
+                  opacity: 0.8
+                }}>
+                  {properties.discountText}
+                </p>
+                <a
+                  href={properties.ctaLink}
+                  style={{
+                    background: 'rgba(255,255,255,0.9)',
+                    color: properties.backgroundColor,
+                    padding: '15px 30px',
+                    borderRadius: '50px',
+                    textDecoration: 'none',
+                    fontSize: '1.2rem',
+                    fontWeight: 'bold',
+                    display: 'inline-block',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  {properties.ctaText}
+                </a>
+              </div>
+            </section>
+          );
+
+        case 'shopping_cart':
+          return (
+            <div
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '30px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+              }}
+              onClick={handleComponentClick}
+            >
+              <h2 style={{ margin: '0 0 25px', fontSize: '1.8rem', fontWeight: 'bold' }}>
+                {properties.title}
+              </h2>
+              <div style={{ borderBottom: '1px solid #e5e7eb', paddingBottom: '20px', marginBottom: '20px' }}>
+                {[1,2,3].map(i => (
+                  <div key={i} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '15px', 
+                    padding: '15px 0',
+                    borderBottom: i < 3 ? '1px solid #f1f5f9' : 'none'
+                  }}>
+                    <img 
+                      src={`https://images.unsplash.com/photo-150574042092${i}-5e560c06d30e?w=80&h=80&fit=crop`}
+                      alt={`Cart Item ${i}`}
+                      style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ margin: '0 0 5px', fontSize: '1rem' }}>Product {i}</h4>
+                      <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem' }}>RWF {(29.99 * i).toFixed(2)}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <button style={{ background: '#f3f4f6', border: 'none', width: '30px', height: '30px', borderRadius: '50%' }}>-</button>
+                      <span style={{ minWidth: '20px', textAlign: 'center' }}>{i}</span>
+                      <button style={{ background: '#f3f4f6', border: 'none', width: '30px', height: '30px', borderRadius: '50%' }}>+</button>
+                    </div>
+                    <button style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>🗑️</button>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Total: RWF 179.94</span>
+              </div>
+              <button style={{
+                width: '100%',
+                background: '#059669',
+                color: 'white',
+                border: 'none',
+                padding: '15px',
+                borderRadius: '8px',
+                fontWeight: '600',
+                fontSize: '1.1rem',
+                cursor: 'pointer'
+              }}>
+                {properties.checkoutButtonText}
+              </button>
+            </div>
+          );
+
         default:
           // Keep existing component rendering for basic components
           return renderComponent(component);
