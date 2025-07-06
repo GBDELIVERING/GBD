@@ -364,12 +364,39 @@ class EcommerceSettings(BaseModel):
     tax_rate: float = 0.0
     enable_delivery: bool = True
     enable_pickup: bool = True
+    maintenance_mode: bool = False
+    maintenance_message: str = "We are currently performing scheduled maintenance. Please check back soon!"
     checkout_fields: Dict[str, Any] = {
         "require_phone": True,
         "require_address": True,
         "allow_notes": True
     }
     order_statuses: List[str] = ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"]
+
+class MaintenanceSettings(BaseModel):
+    enabled: bool = False
+    title: str = "Site Under Maintenance"
+    message: str = "We are currently performing scheduled maintenance. Please check back soon!"
+    estimated_time: Optional[str] = None
+    contact_email: Optional[str] = None
+
+class SliderItem(BaseModel):
+    title: str
+    subtitle: Optional[str] = None
+    description: Optional[str] = None
+    image_url: str
+    button_text: Optional[str] = None
+    button_link: Optional[str] = None
+    order: int = 0
+    active: bool = True
+
+class SectionContent(BaseModel):
+    section_id: str
+    type: str  # hero, features, testimonials, about, etc.
+    title: str
+    content: Dict[str, Any]
+    order: int = 0
+    active: bool = True
 
 # Helper Functions
 def hash_password(password: str) -> str:
