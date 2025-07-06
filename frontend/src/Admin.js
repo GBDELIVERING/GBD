@@ -3154,8 +3154,11 @@ const Admin = () => {
 
     const pageTemplates = [
       { id: 'blank', name: 'Blank Page', description: 'Start from scratch', thumbnail: '🏳️' },
+      { id: 'ecommerce_home', name: 'E-commerce Homepage', description: 'Complete online store homepage', thumbnail: '🛒' },
+      { id: 'product_page', name: 'Product Page', description: 'Single product detail page', thumbnail: '📦' },
+      { id: 'category_page', name: 'Category Page', description: 'Product category listing', thumbnail: '🏷️' },
+      { id: 'shopping_cart', name: 'Shopping Cart', description: 'Cart and checkout pages', thumbnail: '🛍️' },
       { id: 'business', name: 'Business Homepage', description: 'Professional business site', thumbnail: '🏢' },
-      { id: 'ecommerce', name: 'E-commerce Store', description: 'Online store layout', thumbnail: '🛒' },
       { id: 'portfolio', name: 'Portfolio', description: 'Showcase your work', thumbnail: '🎨' },
       { id: 'blog', name: 'Blog', description: 'Blog-style layout', thumbnail: '📰' },
       { id: 'restaurant', name: 'Restaurant', description: 'Food & dining theme', thumbnail: '🍽️' },
