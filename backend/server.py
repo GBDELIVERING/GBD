@@ -1525,6 +1525,184 @@ async def get_maintenance_settings():
         "contact_email": settings.get("contact_email")
     }
 
+# Slider Management APIs
+@app.get("/api/admin/sliders")
+async def get_sliders():
+    """Get all sliders"""
+    sliders = await db.sliders.find({}).sort("order", 1).to_list(50)
+    for slider in sliders:
+        slider["_id"] = str(slider["_id"])
+    return {"sliders": sliders}
+
+@app.post("/api/admin/sliders")
+async def create_slider(slider: SliderItem):
+    """Create new slider"""
+    slider_data = slider.dict()
+    slider_data["created_at"] = datetime.utcnow()
+    
+    result = await db.sliders.insert_one(slider_data)
+    return {"message": "Slider created", "slider_id": str(result.inserted_id)}
+
+@app.put("/api/admin/sliders/{slider_id}")
+async def update_slider(slider_id: str, slider: SliderItem):
+    """Update slider"""
+    slider_data = slider.dict()
+    slider_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.sliders.update_one(
+        {"_id": ObjectId(slider_id)},
+        {"$set": slider_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Slider not found")
+    
+    return {"message": "Slider updated"}
+
+@app.delete("/api/admin/sliders/{slider_id}")
+async def delete_slider(slider_id: str):
+    """Delete slider"""
+    result = await db.sliders.delete_one({"_id": ObjectId(slider_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Slider not found")
+    
+    return {"message": "Slider deleted"}
+
+@app.get("/api/public/sliders")
+async def get_public_sliders():
+    """Get active sliders for public display"""
+    sliders = await db.sliders.find({"active": True}).sort("order", 1).to_list(10)
+    for slider in sliders:
+        slider.pop("_id", None)
+    return {"sliders": sliders}
+
+# Sections Management APIs
+@app.get("/api/admin/sections")
+async def get_sections():
+    """Get all sections"""
+    sections = await db.sections.find({}).sort("order", 1).to_list(100)
+    for section in sections:
+        section["_id"] = str(section["_id"])
+    return {"sections": sections}
+
+@app.post("/api/admin/sections")
+async def create_section(section: SectionContent):
+    """Create new section"""
+    section_data = section.dict()
+    section_data["created_at"] = datetime.utcnow()
+    
+    result = await db.sections.insert_one(section_data)
+    return {"message": "Section created", "section_id": str(result.inserted_id)}
+
+@app.put("/api/admin/sections/{section_id}")
+async def update_section(section_id: str, section: SectionContent):
+    """Update section"""
+    section_data = section.dict()
+    section_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.sections.update_one(
+        {"_id": ObjectId(section_id)},
+        {"$set": section_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    return {"message": "Section updated"}
+
+@app.delete("/api/admin/sections/{section_id}")
+async def delete_section(section_id: str):
+    """Delete section"""
+    result = await db.sections.delete_one({"_id": ObjectId(section_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Section not found")
+    
+    return {"message": "Section deleted"}
+
+@app.get("/api/public/sections")
+async def get_public_sections():
+    """Get active sections for public display"""
+    sections = await db.sections.find({"active": True}).sort("order", 1).to_list(50)
+    for section in sections:
+        section.pop("_id", None)
+    return {"sections": sections}
+
+# WhatsApp Integration APIs
+@app.post("/api/admin/whatsapp/send-order")
+async def send_order_to_whatsapp(order_id: str, phone_number: str):
+    """Send order details to WhatsApp"""
+    try:
+        # Get order details
+        order = await db.orders.find_one({"order_id": order_id})
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Format order message
+        message = "🛒 *New Order #" + order_id[:8] + "*\n\n📦 *Items:*\n"
+        
+        total_amount = 0
+        for item in order.get("items", []):
+            product = await db.products.find_one({"_id": ObjectId(item["product_id"])})
+            if product:
+                item_total = item["quantity"] * product["price"]
+                total_amount += item_total
+                message += "• " + product["name"] + " x" + str(item["quantity"]) + " - RWF " + "{:,.0f}".format(item_total) + "\n"
+        
+        message += "\n💰 *Total: RWF " + "{:,.0f}".format(total_amount) + "*\n\n"
+        message += "👤 *Customer:*\n"
+        message += "📧 " + order.get("customer_email", "N/A") + "\n"
+        message += "📱 " + order.get("customer_phone", "N/A") + "\n"
+        message += "📍 " + order.get("delivery_address", "N/A") + "\n\n"
+        message += "💳 *Payment:* " + order.get("payment_method", "N/A") + "\n"
+        message += "📅 *Date:* " + order.get("created_at", datetime.utcnow()).strftime("%Y-%m-%d %H:%M") + "\n\n"
+        message += "📝 *Notes:* " + order.get("notes", "None")
+        
+        # Create WhatsApp URL
+        whatsapp_url = "https://wa.me/" + phone_number + "?text=" + message.replace(" ", "%20").replace("\n", "%0A")
+        
+        return {
+            "message": "WhatsApp URL generated successfully",
+            "whatsapp_url": whatsapp_url,
+            "formatted_message": message
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating WhatsApp message: {str(e)}")
+
+@app.get("/api/admin/whatsapp/settings")
+async def get_whatsapp_settings():
+    """Get WhatsApp integration settings"""
+    settings = await db.whatsapp_settings.find_one({"type": "main"})
+    if not settings:
+        return {
+            "enabled": False,
+            "phone_number": "",
+            "auto_send": False,
+            "message_template": "default"
+        }
+    
+    return {
+        "enabled": settings.get("enabled", False),
+        "phone_number": settings.get("phone_number", ""),
+        "auto_send": settings.get("auto_send", False),
+        "message_template": settings.get("message_template", "default")
+    }
+
+@app.post("/api/admin/whatsapp/settings")
+async def update_whatsapp_settings(settings: Dict[str, Any]):
+    """Update WhatsApp integration settings"""
+    settings["updated_at"] = datetime.utcnow()
+    
+    await db.whatsapp_settings.update_one(
+        {"type": "main"},
+        {"$set": settings},
+        upsert=True
+    )
+    
+    return {"message": "WhatsApp settings updated"}
+
 # Initialize delivery zones and settings
 @app.on_event("startup")
 async def startup_event():
