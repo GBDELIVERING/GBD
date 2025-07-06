@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import './App.css';
+import Admin from './Admin';
 
 // Auth Context
 const AuthContext = createContext();
