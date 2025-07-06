@@ -785,6 +785,7 @@ const AuthModal = ({ isOpen, onClose }) => {
 
 const App = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     // Handle auth links
@@ -793,11 +794,34 @@ const App = () => {
         e.preventDefault();
         setShowAuthModal(true);
       }
+      if (e.target.getAttribute('href') === '#admin') {
+        e.preventDefault();
+        setShowAdmin(true);
+      }
     };
 
     document.addEventListener('click', handleAuthLink);
     return () => document.removeEventListener('click', handleAuthLink);
   }, []);
+
+  // Show admin panel if requested
+  if (showAdmin) {
+    return (
+      <AuthProvider>
+        <div className="admin-wrapper">
+          <div className="admin-header">
+            <button 
+              onClick={() => setShowAdmin(false)}
+              className="back-to-store-btn"
+            >
+              ← Back to Store
+            </button>
+          </div>
+          <Admin />
+        </div>
+      </AuthProvider>
+    );
+  }
 
   return (
     <AuthProvider>
@@ -823,6 +847,7 @@ const App = () => {
                   <li><a href="#home" className="hover:text-white">Home</a></li>
                   <li><a href="#products" className="hover:text-white">Products</a></li>
                   <li><a href="#cart" className="hover:text-white">Cart</a></li>
+                  <li><a href="#admin" className="hover:text-white">Admin Panel</a></li>
                 </ul>
               </div>
               <div>
