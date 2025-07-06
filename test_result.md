@@ -622,29 +622,3 @@ agent_communication:
   - agent: "testing"
     message: "Completed testing of enhanced admin panel backend functionality. Most APIs are working correctly, but the Individual Product Update API is failing. The bulk update APIs (both BEAR-style and traditional) are working correctly. All other admin panel APIs (e-commerce settings, delivery zones, special offers, file upload, analytics, user management, and email marketing) are working correctly."
 
-  - task: "WhatsApp Integration APIs"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "All WhatsApp Integration APIs are working correctly. Successfully tested GET /api/admin/whatsapp/settings, POST /api/admin/whatsapp/settings, and POST /api/admin/whatsapp/send-order. The WhatsApp message generation for orders works as expected."
-
-  - task: "Enhanced E-commerce Settings"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "Enhanced E-commerce Settings are working correctly. Verified that maintenance mode fields are properly stored in e-commerce settings and that public settings include maintenance information."
-
-  - agent: "testing"
-    message: "Completed testing of all new advanced admin panel features. All APIs are working correctly, including Slider Management, Website Builder/Sections, Maintenance Mode, WhatsApp Integration, and Enhanced E-commerce Settings. The maintenance mode middleware is functioning properly, blocking public access while allowing admin access when enabled."
