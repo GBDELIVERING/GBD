@@ -3315,6 +3315,136 @@ const Admin = () => {
             { icon: '🔒', title: 'Secure', description: 'Bank-level security' },
             { icon: '📱', title: 'Responsive', description: 'Works on all devices' }
           ]
+        },
+        // E-commerce Component Defaults
+        product_grid: {
+          title: 'Our Products',
+          columns: 4,
+          showPrice: true,
+          showRating: true,
+          showQuickView: true,
+          sortBy: 'name',
+          categoryFilter: 'all'
+        },
+        product_card: {
+          productName: 'Sample Product',
+          price: 29.99,
+          originalPrice: 39.99,
+          discount: 25,
+          rating: 4.5,
+          reviews: 128,
+          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
+          inStock: true,
+          quickView: true,
+          addToCart: true
+        },
+        product_slider: {
+          title: 'Featured Products',
+          autoplay: true,
+          slidesToShow: 4,
+          slidesToScroll: 1,
+          dots: true,
+          arrows: true,
+          categoryFilter: 'featured'
+        },
+        category_banner: {
+          title: 'Shop by Category',
+          categories: [
+            { name: 'Electronics', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300', link: '/category/electronics' },
+            { name: 'Fashion', image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300', link: '/category/fashion' },
+            { name: 'Home & Garden', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300', link: '/category/home' }
+          ],
+          layout: 'grid'
+        },
+        featured_products: {
+          title: 'Featured Products',
+          subtitle: 'Hand-picked selections just for you',
+          layout: 'carousel',
+          showBadge: true,
+          badgeText: 'Featured',
+          productsToShow: 6
+        },
+        product_search: {
+          placeholder: 'Search products...',
+          showCategories: true,
+          showPriceFilter: true,
+          showBrandFilter: true,
+          showRatingFilter: true,
+          layout: 'horizontal'
+        },
+        shopping_cart: {
+          title: 'Shopping Cart',
+          showThumbnails: true,
+          showQuantityControls: true,
+          showRemoveOption: true,
+          showContinueShopping: true,
+          checkoutButtonText: 'Proceed to Checkout'
+        },
+        wishlist: {
+          title: 'My Wishlist',
+          showRemoveOption: true,
+          showMoveToCart: true,
+          layout: 'grid',
+          itemsPerRow: 3
+        },
+        product_reviews: {
+          title: 'Customer Reviews',
+          showOverallRating: true,
+          showRatingBreakdown: true,
+          showReviewForm: true,
+          reviewsPerPage: 5,
+          sortBy: 'newest'
+        },
+        checkout_form: {
+          title: 'Checkout',
+          steps: ['shipping', 'payment', 'review'],
+          showProgressIndicator: true,
+          enableGuestCheckout: true,
+          requiredFields: ['email', 'phone', 'address']
+        },
+        price_filter: {
+          title: 'Filter by Price',
+          minPrice: 0,
+          maxPrice: 1000,
+          currency: 'RWF',
+          showRange: true,
+          step: 10
+        },
+        brand_showcase: {
+          title: 'Our Partners',
+          brands: [
+            { name: 'Brand 1', logo: 'https://via.placeholder.com/150x80', link: '#' },
+            { name: 'Brand 2', logo: 'https://via.placeholder.com/150x80', link: '#' },
+            { name: 'Brand 3', logo: 'https://via.placeholder.com/150x80', link: '#' }
+          ],
+          layout: 'carousel',
+          autoplay: true
+        },
+        sale_banner: {
+          title: 'MEGA SALE',
+          subtitle: 'Up to 70% OFF',
+          discountText: 'Limited Time Offer',
+          ctaText: 'Shop Now',
+          ctaLink: '/sale',
+          backgroundColor: '#ff6b6b',
+          textColor: '#ffffff'
+        },
+        newsletter_signup: {
+          title: 'Stay Updated',
+          subtitle: 'Get the latest offers and updates',
+          placeholder: 'Enter your email address',
+          buttonText: 'Subscribe',
+          showPrivacyNote: true,
+          privacyText: 'We respect your privacy. Unsubscribe anytime.'
+        },
+        social_proof: {
+          customerCount: '10,000+',
+          customerText: 'Happy Customers',
+          reviewCount: '50,000+',
+          reviewText: '5-Star Reviews',
+          orderCount: '100,000+',
+          orderText: 'Orders Delivered',
+          layout: 'horizontal'
         }
       };
 
