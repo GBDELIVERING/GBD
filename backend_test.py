@@ -28,6 +28,10 @@ test_results = {
 ADMIN_EMAIL = "admin@freshcuts.rw"
 ADMIN_PASSWORD = "Admin123!"
 
+# Admin credentials for testing admin endpoints
+ADMIN_EMAIL = "admin@freshcuts.rw"
+ADMIN_PASSWORD = "Admin123!"
+
 # Helper function to generate random string
 def random_string(length=8):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
