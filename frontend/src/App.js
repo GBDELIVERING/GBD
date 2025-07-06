@@ -395,7 +395,7 @@ const Cart = () => {
               
               <div className="mt-6 pt-6 border-t">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-xl font-bold">Total: ${total.toFixed(2)}</span>
+                  <span className="text-xl font-bold">Total: RWF {total.toLocaleString()}</span>
                   <button 
                     onClick={() => setShowPayment(true)}
                     className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
