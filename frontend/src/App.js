@@ -478,7 +478,7 @@ const PaymentModal = ({ total, onClose, cartItems }) => {
         },
         body: JSON.stringify({
           amount: total,
-          description: `Fresh Cuts Market - Order Total: $${total}`,
+          description: `Fresh Cuts Market - Order Total: RWF ${total.toLocaleString()}`,
           redirect_url: `${currentUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
           back_url: currentUrl
         })
