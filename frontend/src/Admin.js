@@ -3440,6 +3440,24 @@ const Admin = () => {
           >
             📱 WhatsApp Integration
           </button>
+          <button 
+            className={activeTab === 'uxbuilder' ? 'active' : ''}
+            onClick={() => setActiveTab('uxbuilder')}
+          >
+            🎨 UX Builder
+          </button>
+          <button 
+            className={activeTab === 'cms' ? 'active' : ''}
+            onClick={() => setActiveTab('cms')}
+          >
+            📝 CMS Manager
+          </button>
+          <button 
+            className={activeTab === 'ecommerce' ? 'active' : ''}
+            onClick={() => setActiveTab('ecommerce')}
+          >
+            🛒 Advanced E-commerce
+          </button>
         </nav>
       </div>
 
