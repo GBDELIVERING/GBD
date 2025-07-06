@@ -1329,25 +1329,471 @@ const Admin = () => {
     </div>
   );
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'products':
-        return <ProductManagement />;
-      case 'offers':
-        return <SpecialOffersManagement />;
-      case 'orders':
-        return <OrderManagement />;
-      case 'users':
-        return <UserManagement />;
-      case 'payments':
-        return <PaymentManagement />;
-      case 'emails':
-        return <EmailManagement />;
-      default:
-        return <Dashboard />;
-    }
+  const EcommerceCustomization = () => {
+    const [settings, setSettings] = useState({
+      store_name: "German Butchery",
+      store_tagline: "Premium Quality Meats & Fresh Groceries",
+      primary_color: "#dc2626",
+      secondary_color: "#991b1b",
+      currency: "RWF",
+      currency_symbol: "RWF",
+      tax_rate: 0.0,
+      enable_delivery: true,
+      enable_pickup: true,
+      checkout_fields: {
+        require_phone: true,
+        require_address: true,
+        allow_notes: true
+      },
+      order_statuses: ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"]
+    });
+    const [deliveryZones, setDeliveryZones] = useState([]);
+    const [showZoneModal, setShowZoneModal] = useState(false);
+    const [editingZone, setEditingZone] = useState(null);
+    const [zoneForm, setZoneForm] = useState({
+      name: '',
+      areas: '',
+      base_fee: '',
+      per_km_rate: '',
+      min_order_for_free: ''
+    });
+
+    useEffect(() => {
+      fetchSettings();
+      fetchDeliveryZones();
+    }, []);
+
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/ecommerce-settings`);
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data);
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    };
+
+    const fetchDeliveryZones = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/delivery-zones`);
+        if (response.ok) {
+          const data = await response.json();
+          setDeliveryZones(data.zones || []);
+        }
+      } catch (error) {
+        console.error('Error fetching delivery zones:', error);
+      }
+    };
+
+    const handleSettingsUpdate = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/ecommerce-settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings)
+        });
+
+        if (response.ok) {
+          alert('Settings updated successfully!');
+        }
+      } catch (error) {
+        alert('Error updating settings');
+      }
+    };
+
+    const handleZoneSubmit = async (e) => {
+      e.preventDefault();
+      try {
+        const zoneData = {
+          ...zoneForm,
+          areas: zoneForm.areas.split(',').map(area => area.trim()),
+          base_fee: parseFloat(zoneForm.base_fee),
+          per_km_rate: parseFloat(zoneForm.per_km_rate),
+          min_order_for_free: zoneForm.min_order_for_free ? parseFloat(zoneForm.min_order_for_free) : null
+        };
+
+        const url = editingZone 
+          ? `${backendUrl}/api/admin/delivery-zones/${editingZone._id}`
+          : `${backendUrl}/api/admin/delivery-zones`;
+        
+        const method = editingZone ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(zoneData)
+        });
+
+        if (response.ok) {
+          alert(editingZone ? 'Zone updated successfully!' : 'Zone created successfully!');
+          setShowZoneModal(false);
+          setEditingZone(null);
+          setZoneForm({ name: '', areas: '', base_fee: '', per_km_rate: '', min_order_for_free: '' });
+          fetchDeliveryZones();
+        }
+      } catch (error) {
+        alert('Error saving zone');
+      }
+    };
+
+    const handleDeleteZone = async (zoneId) => {
+      if (window.confirm('Are you sure you want to delete this delivery zone?')) {
+        try {
+          const response = await fetch(`${backendUrl}/api/admin/delivery-zones/${zoneId}`, {
+            method: 'DELETE'
+          });
+          if (response.ok) {
+            alert('Zone deleted successfully!');
+            fetchDeliveryZones();
+          }
+        } catch (error) {
+          alert('Error deleting zone');
+        }
+      }
+    };
+
+    const editZone = (zone) => {
+      setEditingZone(zone);
+      setZoneForm({
+        name: zone.name,
+        areas: zone.areas.join(', '),
+        base_fee: zone.base_fee.toString(),
+        per_km_rate: zone.per_km_rate.toString(),
+        min_order_for_free: zone.min_order_for_free?.toString() || ''
+      });
+      setShowZoneModal(true);
+    };
+
+    return (
+      <div className="ecommerce-customization">
+        <h2 className="text-3xl font-bold mb-8">🎨 E-commerce Customization</h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Store Settings */}
+          <div className="customization-section">
+            <h3 className="text-xl font-semibold mb-4">🏪 Store Settings</h3>
+            <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+              <div>
+                <label className="block font-medium mb-2">Store Name</label>
+                <input
+                  type="text"
+                  value={settings.store_name}
+                  onChange={(e) => setSettings({...settings, store_name: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-medium mb-2">Store Tagline</label>
+                <input
+                  type="text"
+                  value={settings.store_tagline}
+                  onChange={(e) => setSettings({...settings, store_tagline: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-medium mb-2">Primary Color</label>
+                  <input
+                    type="color"
+                    value={settings.primary_color}
+                    onChange={(e) => setSettings({...settings, primary_color: e.target.value})}
+                    className="w-full h-10 border rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Secondary Color</label>
+                  <input
+                    type="color"
+                    value={settings.secondary_color}
+                    onChange={(e) => setSettings({...settings, secondary_color: e.target.value})}
+                    className="w-full h-10 border rounded-md"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-medium mb-2">Currency</label>
+                  <select
+                    value={settings.currency}
+                    onChange={(e) => setSettings({...settings, currency: e.target.value, currency_symbol: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="RWF">RWF - Rwandan Franc</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Tax Rate (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={settings.tax_rate}
+                    onChange={(e) => setSettings({...settings, tax_rate: parseFloat(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={settings.enable_delivery}
+                    onChange={(e) => setSettings({...settings, enable_delivery: e.target.checked})}
+                    className="mr-2"
+                  />
+                  Enable Home Delivery
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={settings.enable_pickup}
+                    onChange={(e) => setSettings({...settings, enable_pickup: e.target.checked})}
+                    className="mr-2"
+                  />
+                  Enable Store Pickup
+                </label>
+              </div>
+
+              <button
+                onClick={handleSettingsUpdate}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+              >
+                💾 Save Store Settings
+              </button>
+            </div>
+          </div>
+
+          {/* Delivery Zones */}
+          <div className="customization-section">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">🚚 Delivery Zones</h3>
+              <button
+                onClick={() => setShowZoneModal(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+              >
+                ➕ Add Zone
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {deliveryZones.map(zone => (
+                <div key={zone._id} className="bg-white p-4 rounded-lg shadow-md">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg">{zone.name}</h4>
+                      <p className="text-gray-600">Areas: {zone.areas.join(', ')}</p>
+                      <p className="text-sm text-gray-500">
+                        Base Fee: RWF {zone.base_fee.toLocaleString()} | 
+                        Per KM: RWF {zone.per_km_rate.toLocaleString()}
+                      </p>
+                      {zone.min_order_for_free && (
+                        <p className="text-sm text-green-600">
+                          Free delivery on orders above RWF {zone.min_order_for_free.toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => editZone(zone)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteZone(zone._id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Checkout Settings */}
+        <div className="mt-8">
+          <h3 className="text-xl font-semibold mb-4">🛒 Checkout Settings</h3>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={settings.checkout_fields.require_phone}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    checkout_fields: {...settings.checkout_fields, require_phone: e.target.checked}
+                  })}
+                  className="mr-2"
+                />
+                Require Phone Number
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={settings.checkout_fields.require_address}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    checkout_fields: {...settings.checkout_fields, require_address: e.target.checked}
+                  })}
+                  className="mr-2"
+                />
+                Require Address
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={settings.checkout_fields.allow_notes}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    checkout_fields: {...settings.checkout_fields, allow_notes: e.target.checked}
+                  })}
+                  className="mr-2"
+                />
+                Allow Order Notes
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Statuses */}
+        <div className="mt-8">
+          <h3 className="text-xl font-semibold mb-4">📋 Order Status Management</h3>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="flex flex-wrap gap-3">
+              {settings.order_statuses.map((status, index) => (
+                <div key={index} className="flex items-center bg-gray-100 px-3 py-2 rounded-md">
+                  <span className="mr-2">{status}</span>
+                  <button
+                    onClick={() => {
+                      const newStatuses = settings.order_statuses.filter((_, i) => i !== index);
+                      setSettings({...settings, order_statuses: newStatuses});
+                    }}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => {
+                  const newStatus = prompt('Enter new order status:');
+                  if (newStatus) {
+                    setSettings({
+                      ...settings,
+                      order_statuses: [...settings.order_statuses, newStatus.toLowerCase()]
+                    });
+                  }
+                }}
+                className="bg-gray-200 px-3 py-2 rounded-md hover:bg-gray-300 transition"
+              >
+                + Add Status
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Zone Modal */}
+        {showZoneModal && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <div className="modal-header">
+                <h3>{editingZone ? 'Edit Delivery Zone' : 'Add Delivery Zone'}</h3>
+                <button onClick={() => {
+                  setShowZoneModal(false);
+                  setEditingZone(null);
+                  setZoneForm({ name: '', areas: '', base_fee: '', per_km_rate: '', min_order_for_free: '' });
+                }}>×</button>
+              </div>
+              <form onSubmit={handleZoneSubmit} className="zone-form p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-medium mb-2">Zone Name</label>
+                    <input
+                      type="text"
+                      value={zoneForm.name}
+                      onChange={(e) => setZoneForm({...zoneForm, name: e.target.value})}
+                      placeholder="e.g., Kigali City Center"
+                      className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium mb-2">Areas (comma-separated)</label>
+                    <textarea
+                      value={zoneForm.areas}
+                      onChange={(e) => setZoneForm({...zoneForm, areas: e.target.value})}
+                      placeholder="e.g., Nyarugenge, Gasabo, Kicukiro"
+                      className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-medium mb-2">Base Fee (RWF)</label>
+                      <input
+                        type="number"
+                        value={zoneForm.base_fee}
+                        onChange={(e) => setZoneForm({...zoneForm, base_fee: e.target.value})}
+                        placeholder="2000"
+                        className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-2">Per KM Rate (RWF)</label>
+                      <input
+                        type="number"
+                        value={zoneForm.per_km_rate}
+                        onChange={(e) => setZoneForm({...zoneForm, per_km_rate: e.target.value})}
+                        placeholder="300"
+                        className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-medium mb-2">Free Delivery Threshold (RWF) - Optional</label>
+                    <input
+                      type="number"
+                      value={zoneForm.min_order_for_free}
+                      onChange={(e) => setZoneForm({...zoneForm, min_order_for_free: e.target.value})}
+                      placeholder="25000"
+                      className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex space-x-4 mt-6">
+                  <button type="submit" className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">
+                    {editingZone ? 'Update Zone' : 'Create Zone'}
+                  </button>
+                  <button type="button" onClick={() => setShowZoneModal(false)} className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
