@@ -490,7 +490,7 @@ const Admin = () => {
             {payments.map(payment => (
               <tr key={payment._id}>
                 <td>{payment._id?.substring(0, 12)}...</td>
-                <td>${payment.amount?.toFixed(2)}</td>
+                <td>RWF {payment.amount?.toLocaleString()}</td>
                 <td>{payment.payment_method}</td>
                 <td>
                   <span className={`status ${payment.status}`}>
