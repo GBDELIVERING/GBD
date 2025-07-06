@@ -317,7 +317,7 @@ const Admin = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Price ($)</label>
+                    <label>Price (RWF)</label>
                     <input
                       type="number"
                       step="0.01"
