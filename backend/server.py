@@ -106,9 +106,20 @@ class Product(BaseModel):
     discount_percentage: float = 0.0
     is_special_offer: bool = False
 
+# OAuth and File Upload Models
+class GoogleAuthRequest(BaseModel):
+    code: str
+    redirect_uri: str
+
+class FacebookAuthRequest(BaseModel):
+    access_token: str
+
 class ProductBulkUpdate(BaseModel):
     product_ids: List[str]
     updates: Dict[str, Any]
+
+class BulkProductUpdate(BaseModel):
+    updates: List[Dict[str, Any]]  # List of product updates with IDs
 
 class BulkProductUpdate(BaseModel):
     updates: List[Dict[str, Any]]  # List of product updates with IDs
