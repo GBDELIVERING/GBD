@@ -1398,6 +1398,12 @@ const Admin = () => {
           >
             💳 Payments
           </button>
+          <button 
+            className={activeTab === 'emails' ? 'active' : ''}
+            onClick={() => setActiveTab('emails')}
+          >
+            📧 Email Marketing
+          </button>
         </nav>
       </div>
 
