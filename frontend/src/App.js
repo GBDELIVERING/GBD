@@ -543,6 +543,15 @@ const Cart = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
   const [customerNotes, setCustomerNotes] = useState('');
+  const [deliveryInfo, setDeliveryInfo] = useState({
+    method: 'delivery', // 'delivery' or 'pickup'
+    address: '',
+    district: '',
+    sector: '',
+    phone: ''
+  });
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [calculatingDelivery, setCalculatingDelivery] = useState(false);
   const { token, user } = useAuth();
 
   useEffect(() => {
@@ -550,6 +559,14 @@ const Cart = () => {
       fetchCart();
     }
   }, [token]);
+
+  useEffect(() => {
+    if (deliveryInfo.method === 'delivery' && deliveryInfo.district && total > 0) {
+      calculateDeliveryFee();
+    } else if (deliveryInfo.method === 'pickup') {
+      setDeliveryFee(0);
+    }
+  }, [deliveryInfo.district, deliveryInfo.method, total]);
 
   const fetchCart = async () => {
     try {
@@ -563,6 +580,33 @@ const Cart = () => {
       console.error('Error fetching cart:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const calculateDeliveryFee = async () => {
+    setCalculatingDelivery(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/delivery/calculate-fee`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: {
+            address: deliveryInfo.address,
+            district: deliveryInfo.district,
+            sector: deliveryInfo.sector
+          },
+          order_total: total
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDeliveryFee(data.delivery_fee);
+      }
+    } catch (error) {
+      console.error('Error calculating delivery fee:', error);
+    } finally {
+      setCalculatingDelivery(false);
     }
   };
 
@@ -580,6 +624,14 @@ const Cart = () => {
       console.error('Error removing item:', error);
     }
   };
+
+  const rwandaDistricts = [
+    'Nyarugenge', 'Gasabo', 'Kicukiro', 'Nyanza', 'Gisagara', 'Nyaruguru',
+    'Huye', 'Nyamagabe', 'Ruhango', 'Muhanga', 'Kamonyi', 'Karongi',
+    'Rutsiro', 'Rubavu', 'Nyabihu', 'Ngororero', 'Rusizi', 'Nyamasheke',
+    'Rulindo', 'Gakenke', 'Musanze', 'Burera', 'Gicumbi', 'Rwamagana',
+    'Nyagatare', 'Gatsibo', 'Kayonza', 'Kirehe', 'Ngoma', 'Bugesera'
+  ];
 
   if (!token) {
     return (
@@ -606,7 +658,7 @@ const Cart = () => {
   return (
     <section id="cart" className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-12">Shopping Cart</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">🛒 Shopping Cart</h2>
         
         {cartItems.length === 0 ? (
           <div className="text-center py-8">
@@ -619,59 +671,178 @@ const Cart = () => {
             </button>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              {cartItems.map(item => (
-                <div key={item.product_id} className="flex items-center justify-between border-b py-4">
-                  <div className="flex items-center space-x-4">
-                    <img 
-                      src={item.product.image_url} 
-                      alt={item.product.name}
-                      className="w-16 h-16 object-cover rounded"
-                    />
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Cart Items */}
+              <div className="lg:col-span-2">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-xl font-bold mb-4">📦 Your Items</h3>
+                  {cartItems.map(item => (
+                    <div key={item.product_id} className="flex items-center justify-between border-b py-4">
+                      <div className="flex items-center space-x-4">
+                        <img 
+                          src={item.product.image_url} 
+                          alt={item.product.name}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                        <div>
+                          <h3 className="font-semibold">{item.product.name}</h3>
+                          <p className="text-gray-600">
+                            {item.quantity} {item.unit} × RWF {item.product.price.toLocaleString()}
+                          </p>
+                          {item.product.discount_percentage > 0 && (
+                            <p className="text-green-600 text-sm">
+                              🎉 {item.product.discount_percentage}% discount applied
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <span className="font-semibold">RWF {item.subtotal.toLocaleString()}</span>
+                        <button 
+                          onClick={() => removeFromCart(item.product_id)}
+                          className="text-red-600 hover:text-red-800 transition"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Delivery & Summary */}
+              <div className="space-y-6">
+                {/* Delivery Options */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-xl font-bold mb-4">🚚 Delivery Options</h3>
+                  
+                  <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold">{item.product.name}</h3>
-                      <p className="text-gray-600">
-                        {item.quantity} {item.unit} × RWF {item.product.price.toLocaleString()}
-                      </p>
-                      {item.product.discount_percentage > 0 && (
-                        <p className="text-green-600 text-sm">
-                          🎉 {item.product.discount_percentage}% discount applied
-                        </p>
-                      )}
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="radio"
+                          name="delivery_method"
+                          value="delivery"
+                          checked={deliveryInfo.method === 'delivery'}
+                          onChange={(e) => setDeliveryInfo({...deliveryInfo, method: e.target.value})}
+                          className="text-red-600"
+                        />
+                        <span className="font-medium">🚚 Home Delivery</span>
+                      </label>
+                    </div>
+                    
+                    <div>
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="radio"
+                          name="delivery_method"
+                          value="pickup"
+                          checked={deliveryInfo.method === 'pickup'}
+                          onChange={(e) => setDeliveryInfo({...deliveryInfo, method: e.target.value})}
+                          className="text-red-600"
+                        />
+                        <span className="font-medium">🏪 Store Pickup (Free)</span>
+                      </label>
+                    </div>
+
+                    {deliveryInfo.method === 'delivery' && (
+                      <div className="space-y-3 pl-6 border-l-2 border-red-200">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">📍 District</label>
+                          <select
+                            value={deliveryInfo.district}
+                            onChange={(e) => setDeliveryInfo({...deliveryInfo, district: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                            required
+                          >
+                            <option value="">Select District</option>
+                            {rwandaDistricts.map(district => (
+                              <option key={district} value={district}>{district}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium mb-1">🏠 Full Address</label>
+                          <textarea
+                            value={deliveryInfo.address}
+                            onChange={(e) => setDeliveryInfo({...deliveryInfo, address: e.target.value})}
+                            placeholder="Street, sector, cell, landmark..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                            rows="3"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium mb-1">📱 Phone Number</label>
+                          <input
+                            type="tel"
+                            value={deliveryInfo.phone}
+                            onChange={(e) => setDeliveryInfo({...deliveryInfo, phone: e.target.value})}
+                            placeholder="+250 xxx xxx xxx"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                            required
+                          />
+                        </div>
+
+                        {calculatingDelivery && (
+                          <div className="text-center py-2">
+                            <span className="text-blue-600">🔄 Calculating delivery fee...</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Order Summary */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-xl font-bold mb-4">📄 Order Summary</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span>RWF {total.toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <span>Delivery Fee:</span>
+                      <span>
+                        {deliveryInfo.method === 'pickup' ? (
+                          <span className="text-green-600">FREE</span>
+                        ) : (
+                          `RWF ${deliveryFee.toLocaleString()}`
+                        )}
+                      </span>
+                    </div>
+                    
+                    <hr />
+                    
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Total:</span>
+                      <span>RWF {(total + deliveryFee).toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <span className="font-semibold">RWF {item.subtotal.toLocaleString()}</span>
-                    <button 
-                      onClick={() => removeFromCart(item.product_id)}
-                      className="text-red-600 hover:text-red-800 transition"
-                    >
-                      Remove
-                    </button>
+
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium mb-2">💬 Special Notes (Optional)</label>
+                    <textarea
+                      value={customerNotes}
+                      onChange={(e) => setCustomerNotes(e.target.value)}
+                      placeholder="Any special instructions for your order..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                      rows="3"
+                    />
                   </div>
-                </div>
-              ))}
-              
-              <div className="mt-6 pt-6 border-t">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Special Notes (Optional)</label>
-                  <textarea
-                    value={customerNotes}
-                    onChange={(e) => setCustomerNotes(e.target.value)}
-                    placeholder="Any special instructions for your order..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                    rows="3"
-                  />
-                </div>
-                
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-xl font-bold">Total: RWF {total.toLocaleString()}</span>
+
                   <button 
                     onClick={() => setShowPayment(true)}
-                    className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
+                    disabled={deliveryInfo.method === 'delivery' && (!deliveryInfo.district || !deliveryInfo.address || !deliveryInfo.phone)}
+                    className="w-full mt-6 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
-                    Checkout
+                    💳 Proceed to Payment
                   </button>
                 </div>
               </div>
@@ -681,10 +852,12 @@ const Cart = () => {
         
         {showPayment && (
           <PaymentModal 
-            total={total} 
+            total={total + deliveryFee} 
             onClose={() => setShowPayment(false)}
             cartItems={cartItems}
             customerNotes={customerNotes}
+            deliveryInfo={deliveryInfo}
+            deliveryFee={deliveryFee}
           />
         )}
       </div>
