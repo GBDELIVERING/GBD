@@ -2012,6 +2012,12 @@ const Admin = () => {
           >
             ⚙️ Settings
           </button>
+          <button 
+            className={activeTab === 'frontend' ? 'active' : ''}
+            onClick={() => setActiveTab('frontend')}
+          >
+            🎨 Frontend Theme
+          </button>
         </nav>
       </div>
 
