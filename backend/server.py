@@ -1816,6 +1816,244 @@ async def update_whatsapp_settings(settings: Dict[str, Any]):
     
     return {"message": "WhatsApp settings updated"}
 
+# WordPress-like CMS APIs
+@app.get("/api/admin/posts")
+async def get_posts(post_type: str = "post", status: str = None, page: int = 1, per_page: int = 10):
+    """Get posts/pages with pagination"""
+    query = {"post_type": post_type}
+    if status:
+        query["status"] = status
+    
+    skip = (page - 1) * per_page
+    posts = await db.posts.find(query).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
+    total = await db.posts.count_documents(query)
+    
+    for post in posts:
+        post["_id"] = str(post["_id"])
+    
+    return {
+        "posts": posts,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page
+    }
+
+@app.post("/api/admin/posts")
+async def create_post(post: Post):
+    """Create new post/page"""
+    post_data = post.dict()
+    
+    # Generate slug if not provided
+    if not post_data.get("slug"):
+        post_data["slug"] = post_data["title"].lower().replace(" ", "-").replace("'", "")
+    
+    post_data["created_at"] = datetime.utcnow()
+    post_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.posts.insert_one(post_data)
+    return {"message": "Post created", "post_id": str(result.inserted_id)}
+
+@app.get("/api/admin/posts/{post_id}")
+async def get_post(post_id: str):
+    """Get single post/page"""
+    post = await db.posts.find_one({"_id": ObjectId(post_id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    post["_id"] = str(post["_id"])
+    return post
+
+@app.put("/api/admin/posts/{post_id}")
+async def update_post(post_id: str, post: Post):
+    """Update post/page"""
+    post_data = post.dict()
+    post_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.posts.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$set": post_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    return {"message": "Post updated"}
+
+@app.delete("/api/admin/posts/{post_id}")
+async def delete_post(post_id: str):
+    """Delete post/page"""
+    result = await db.posts.delete_one({"_id": ObjectId(post_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    return {"message": "Post deleted"}
+
+@app.get("/api/public/posts")
+async def get_public_posts(post_type: str = "post", page: int = 1, per_page: int = 10):
+    """Get published posts for public display"""
+    query = {"post_type": post_type, "status": "published"}
+    
+    skip = (page - 1) * per_page
+    posts = await db.posts.find(query).sort("published_date", -1).skip(skip).limit(per_page).to_list(per_page)
+    
+    for post in posts:
+        post.pop("_id", None)
+    
+    return {"posts": posts}
+
+# Categories API
+@app.get("/api/admin/categories")
+async def get_categories(category_type: str = "post"):
+    """Get categories"""
+    categories = await db.categories.find({"category_type": category_type}).to_list(100)
+    for category in categories:
+        category["_id"] = str(category["_id"])
+    return {"categories": categories}
+
+@app.post("/api/admin/categories")
+async def create_category(category: Category):
+    """Create new category"""
+    category_data = category.dict()
+    if not category_data.get("slug"):
+        category_data["slug"] = category_data["name"].lower().replace(" ", "-")
+    
+    category_data["created_at"] = datetime.utcnow()
+    result = await db.categories.insert_one(category_data)
+    return {"message": "Category created", "category_id": str(result.inserted_id)}
+
+# Tags API
+@app.get("/api/admin/tags")
+async def get_tags():
+    """Get tags"""
+    tags = await db.tags.find({}).to_list(100)
+    for tag in tags:
+        tag["_id"] = str(tag["_id"])
+    return {"tags": tags}
+
+@app.post("/api/admin/tags")
+async def create_tag(tag: Tag):
+    """Create new tag"""
+    tag_data = tag.dict()
+    if not tag_data.get("slug"):
+        tag_data["slug"] = tag_data["name"].lower().replace(" ", "-")
+    
+    tag_data["created_at"] = datetime.utcnow()
+    result = await db.tags.insert_one(tag_data)
+    return {"message": "Tag created", "tag_id": str(result.inserted_id)}
+
+# Media Library API
+@app.get("/api/admin/media")
+async def get_media(page: int = 1, per_page: int = 20):
+    """Get media library items"""
+    skip = (page - 1) * per_page
+    media = await db.media.find({}).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
+    total = await db.media.count_documents({})
+    
+    for item in media:
+        item["_id"] = str(item["_id"])
+    
+    return {
+        "media": media,
+        "total": total,
+        "page": page,
+        "per_page": per_page
+    }
+
+@app.post("/api/admin/media/upload")
+async def upload_media(file: UploadFile = File(...)):
+    """Upload media file"""
+    try:
+        # Save file
+        file_path = f"uploads/media/{file.filename}"
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        contents = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+        
+        # Create media record
+        media_data = {
+            "filename": file.filename,
+            "original_name": file.filename,
+            "file_path": file_path,
+            "file_url": f"/uploads/media/{file.filename}",
+            "file_type": file.content_type,
+            "file_size": len(contents),
+            "created_at": datetime.utcnow()
+        }
+        
+        result = await db.media.insert_one(media_data)
+        media_data["_id"] = str(result.inserted_id)
+        
+        return {"message": "File uploaded", "media": media_data}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+# UX Builder APIs
+@app.get("/api/admin/builder/pages")
+async def get_builder_pages():
+    """Get all builder pages"""
+    pages = await db.builder_pages.find({}).sort("created_at", -1).to_list(100)
+    for page in pages:
+        page["_id"] = str(page["_id"])
+    return {"pages": pages}
+
+@app.post("/api/admin/builder/pages")
+async def create_builder_page(page: BuilderPage):
+    """Create new builder page"""
+    page_data = page.dict()
+    page_data["created_at"] = datetime.utcnow()
+    page_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.builder_pages.insert_one(page_data)
+    return {"message": "Page created", "page_id": str(result.inserted_id)}
+
+@app.get("/api/admin/builder/pages/{page_id}")
+async def get_builder_page(page_id: str):
+    """Get builder page"""
+    page = await db.builder_pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    page["_id"] = str(page["_id"])
+    return page
+
+@app.put("/api/admin/builder/pages/{page_id}")
+async def update_builder_page(page_id: str, page: BuilderPage):
+    """Update builder page"""
+    page_data = page.dict()
+    page_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.builder_pages.update_one(
+        {"_id": ObjectId(page_id)},
+        {"$set": page_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    return {"message": "Page updated"}
+
+@app.get("/api/admin/builder/templates")
+async def get_page_templates():
+    """Get page templates"""
+    templates = await db.page_templates.find({}).to_list(50)
+    for template in templates:
+        template["_id"] = str(template["_id"])
+    return {"templates": templates}
+
+@app.post("/api/admin/builder/templates")
+async def create_page_template(template: PageTemplate):
+    """Create page template"""
+    template_data = template.dict()
+    template_data["created_at"] = datetime.utcnow()
+    
+    result = await db.page_templates.insert_one(template_data)
+    return {"message": "Template created", "template_id": str(result.inserted_id)}
+
 # Initialize delivery zones and settings
 @app.on_event("startup")
 async def startup_event():
