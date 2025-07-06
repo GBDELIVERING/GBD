@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv("REACT_APP_BACKEND_URL", "https://40ad93c5-4b98-4d0b-bc6c-b3129b4dc293.preview.emergentagent.com")
+BACKEND_URL = os.getenv("REACT_APP_BACKEND_URL", "https://ce11165c-812f-4e18-a243-12c6aafb4d87.preview.emergentagent.com")
 API_URL = f"{BACKEND_URL}/api"
 
 # Test results tracking
