@@ -46,6 +46,7 @@ MOMO_PHONE = "+250783654454"
 DPO_COMPANY_TOKEN = "AAED15C2-21D1-4A8F-AD7F-5165CB681FF4"
 DPO_SERVICE_TYPE = "52269-Product"
 DPO_BASE_URL = "https://secure.3gdirectpay.com"
+DPO_CURRENCY = "RWF"  # Rwandan Francs
 
 # JWT Secret
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-here")
