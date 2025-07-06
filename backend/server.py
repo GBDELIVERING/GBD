@@ -444,6 +444,7 @@ async def create_dpo_payment_token(payment: DPOPayment):
             "transaction_token": transaction_token,
             "amount": payment.amount,
             "total_amount": payment.amount * 1.03,  # With 3% fee
+            "currency": DPO_CURRENCY,
             "description": payment.description,
             "status": "created",
             "payment_method": "dpo",
