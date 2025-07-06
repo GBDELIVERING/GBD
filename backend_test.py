@@ -129,6 +129,29 @@ def test_auth():
     
     return token, user_id
 
+# Test Admin Authentication
+def test_admin_auth():
+    print("\n=== Testing Admin Authentication ===\n")
+    
+    # Test admin login
+    login_data = {
+        "email": ADMIN_EMAIL,
+        "password": ADMIN_PASSWORD
+    }
+    
+    response = requests.post(f"{API_URL}/auth/login", json=login_data)
+    login_success = response.status_code == 200
+    admin_token = None
+    
+    if login_success:
+        data = response.json()
+        admin_token = data.get("token")
+        record_test("Admin Login", True, "Admin login successful", response)
+    else:
+        record_test("Admin Login", False, "Failed to login as admin", response)
+    
+    return admin_token
+
 # Test Product Endpoints
 def test_products():
     print("\n=== Testing Product Endpoints ===\n")
