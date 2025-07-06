@@ -67,6 +67,7 @@ const Header = () => {
           <nav className="hidden md:flex space-x-6">
             <a href="#home" className="hover:text-red-200 transition">Home</a>
             <a href="#products" className="hover:text-red-200 transition">Products</a>
+            <a href="#offers" className="hover:text-red-200 transition">Special Offers</a>
             <a href="#cart" className="hover:text-red-200 transition">Cart</a>
             {user ? (
               <div className="flex items-center space-x-4">
@@ -92,6 +93,7 @@ const Header = () => {
           <nav className="md:hidden mt-4 space-y-2">
             <a href="#home" className="block py-2 hover:text-red-200">Home</a>
             <a href="#products" className="block py-2 hover:text-red-200">Products</a>
+            <a href="#offers" className="block py-2 hover:text-red-200">Special Offers</a>
             <a href="#cart" className="block py-2 hover:text-red-200">Cart</a>
             {user ? (
               <div>
@@ -129,43 +131,285 @@ const Hero = () => {
   );
 };
 
-const ProductCard = ({ product, onAddToCart }) => {
-  const [isLoading, setIsLoading] = useState(false);
+const QuantitySelector = ({ product, onQuantityChange }) => {
+  const [quantity, setQuantity] = useState(product.min_quantity || 1);
+  const [unit, setUnit] = useState(product.unit || 'piece');
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
 
-  const handleAddToCart = async () => {
-    setIsLoading(true);
-    await onAddToCart(product._id);
-    setIsLoading(false);
+  const calculatePrice = (qty, selectedUnit) => {
+    let price = product.price;
+    
+    // Apply discount if applicable
+    if (product.discount_percentage > 0) {
+      price = price * (1 - product.discount_percentage / 100);
+    }
+    
+    if (product.price_per_unit === 'per_kg') {
+      if (selectedUnit === 'gram') {
+        return price * (qty / 1000);
+      } else if (selectedUnit === 'kg') {
+        return price * qty;
+      }
+    } else if (product.price_per_unit === 'per_gram') {
+      if (selectedUnit === 'kg') {
+        return price * (qty * 1000);
+      } else if (selectedUnit === 'gram') {
+        return price * qty;
+      }
+    } else {
+      return price * qty;
+    }
+    
+    return price * qty;
+  };
+
+  useEffect(() => {
+    const price = calculatePrice(quantity, unit);
+    setCalculatedPrice(price);
+    onQuantityChange(quantity, unit, price);
+  }, [quantity, unit, product]);
+
+  const getAvailableUnits = () => {
+    if (product.price_per_unit === 'per_kg') {
+      return [
+        { value: 'kg', label: 'Kilograms' },
+        { value: 'gram', label: 'Grams' }
+      ];
+    } else if (product.price_per_unit === 'per_gram') {
+      return [
+        { value: 'gram', label: 'Grams' },
+        { value: 'kg', label: 'Kilograms' }
+      ];
+    } else {
+      return [{ value: product.unit, label: product.unit.charAt(0).toUpperCase() + product.unit.slice(1) }];
+    }
   };
 
   return (
+    <div className="quantity-selector p-4 border rounded-lg bg-gray-50">
+      <h4 className="font-semibold mb-3">Select Quantity</h4>
+      
+      <div className="flex flex-col space-y-3">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium">Quantity:</label>
+          <input
+            type="number"
+            min={product.min_quantity || 1}
+            max={product.max_quantity || 1000}
+            step={product.price_per_unit === 'per_kg' ? 0.25 : 1}
+            value={quantity}
+            onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+            className="w-24 px-2 py-1 border rounded text-center"
+          />
+          
+          <select
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="px-3 py-1 border rounded"
+          >
+            {getAvailableUnits().map(unitOption => (
+              <option key={unitOption.value} value={unitOption.value}>
+                {unitOption.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600">
+            Min: {product.min_quantity} | Max: {product.max_quantity || 'No limit'}
+          </span>
+          <span className="font-bold text-red-600">
+            RWF {calculatedPrice.toLocaleString()}
+          </span>
+        </div>
+        
+        {product.discount_percentage > 0 && (
+          <div className="text-sm text-green-600">
+            🎉 {product.discount_percentage}% OFF applied!
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ProductCard = ({ product, onAddToCart }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [selectedUnit, setSelectedUnit] = useState(product.unit);
+  const [calculatedPrice, setCalculatedPrice] = useState(product.price);
+
+  const handleQuantityChange = (quantity, unit, price) => {
+    setSelectedQuantity(quantity);
+    setSelectedUnit(unit);
+    setCalculatedPrice(price);
+  };
+
+  const handleAddToCart = async () => {
+    setIsLoading(true);
+    await onAddToCart(product._id, selectedQuantity, selectedUnit);
+    setIsLoading(false);
+    setShowQuantitySelector(false);
+  };
+
+  const displayPrice = product.discount_percentage > 0 
+    ? product.price * (1 - product.discount_percentage / 100)
+    : product.price;
+
+  return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-      <img 
-        src={product.image_url} 
-        alt={product.name}
-        className="w-full h-48 object-cover"
-      />
+      <div className="relative">
+        <img 
+          src={product.image_url} 
+          alt={product.name}
+          className="w-full h-48 object-cover"
+        />
+        {product.is_special_offer && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-bold">
+            {product.discount_percentage}% OFF
+          </div>
+        )}
+      </div>
+      
       <div className="p-4">
         <h3 className="font-bold text-lg mb-2">{product.name}</h3>
         <p className="text-gray-600 text-sm mb-3">{product.description}</p>
-        <div className="flex items-center justify-between">
+        
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <span className="text-2xl font-bold text-red-600">RWF {product.price.toLocaleString()}</span>
+            {product.discount_percentage > 0 ? (
+              <div>
+                <span className="text-lg line-through text-gray-400 mr-2">
+                  RWF {product.price.toLocaleString()}
+                </span>
+                <span className="text-2xl font-bold text-red-600">
+                  RWF {displayPrice.toLocaleString()}
+                </span>
+              </div>
+            ) : (
+              <span className="text-2xl font-bold text-red-600">
+                RWF {product.price.toLocaleString()}
+              </span>
+            )}
             <span className="text-gray-500 ml-1">/{product.unit}</span>
           </div>
-          <button 
-            onClick={handleAddToCart}
-            disabled={isLoading}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition disabled:opacity-50"
-          >
-            {isLoading ? 'Adding...' : 'Add to Cart'}
-          </button>
         </div>
-        <div className="mt-2 text-sm text-gray-500">
+        
+        <div className="text-sm text-gray-500 mb-3">
           Stock: {product.stock} {product.unit}s
         </div>
+        
+        {!showQuantitySelector ? (
+          <button 
+            onClick={() => setShowQuantitySelector(true)}
+            className="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+          >
+            Customize & Add to Cart
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <QuantitySelector 
+              product={product} 
+              onQuantityChange={handleQuantityChange}
+            />
+            <div className="flex space-x-2">
+              <button 
+                onClick={handleAddToCart}
+                disabled={isLoading}
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition disabled:opacity-50"
+              >
+                {isLoading ? 'Adding...' : 'Add to Cart'}
+              </button>
+              <button 
+                onClick={() => setShowQuantitySelector(false)}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+};
+
+const SpecialOffers = () => {
+  const [offers, setOffers] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const { token } = useAuth();
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?featured=true`);
+      const data = await response.json();
+      setFeaturedProducts(data.products || []);
+    } catch (error) {
+      console.error('Error fetching featured products:', error);
+    }
+  };
+
+  const handleAddToCart = async (productId, quantity = 1, unit) => {
+    if (!token) {
+      alert('Please login to add items to cart');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          product_id: productId,
+          quantity: quantity,
+          unit: unit
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Item added to cart! Total: RWF ${data.calculated_price.toLocaleString()}`);
+      } else {
+        alert('Failed to add item to cart');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Error adding item to cart');
+    }
+  };
+
+  return (
+    <section id="offers" className="py-16 bg-gradient-to-r from-red-50 to-orange-50">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-12">🔥 Special Offers & Deals</h2>
+        
+        {featuredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredProducts.map(product => (
+              <ProductCard 
+                key={product._id} 
+                product={product} 
+                onAddToCart={handleAddToCart}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-600 text-lg">No special offers available at the moment.</p>
+            <p className="text-gray-500">Check back soon for amazing deals!</p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 };
 
@@ -209,7 +453,7 @@ const Products = () => {
     }
   };
 
-  const handleAddToCart = async (productId) => {
+  const handleAddToCart = async (productId, quantity = 1, unit) => {
     if (!token) {
       alert('Please login to add items to cart');
       return;
@@ -224,12 +468,14 @@ const Products = () => {
         },
         body: JSON.stringify({
           product_id: productId,
-          quantity: 1
+          quantity: quantity,
+          unit: unit
         })
       });
 
       if (response.ok) {
-        alert('Item added to cart!');
+        const data = await response.json();
+        alert(`Item added to cart! Total: RWF ${data.calculated_price.toLocaleString()}`);
       } else {
         alert('Failed to add item to cart');
       }
@@ -289,6 +535,7 @@ const Cart = () => {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
+  const [customerNotes, setCustomerNotes] = useState('');
   const { token, user } = useAuth();
 
   useEffect(() => {
@@ -377,11 +624,17 @@ const Cart = () => {
                     />
                     <div>
                       <h3 className="font-semibold">{item.product.name}</h3>
-                      <p className="text-gray-600">RWF {item.product.price.toLocaleString()} each</p>
+                      <p className="text-gray-600">
+                        {item.quantity} {item.unit} × RWF {item.product.price.toLocaleString()}
+                      </p>
+                      {item.product.discount_percentage > 0 && (
+                        <p className="text-green-600 text-sm">
+                          🎉 {item.product.discount_percentage}% discount applied
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <span className="text-gray-600">Qty: {item.quantity}</span>
                     <span className="font-semibold">RWF {item.subtotal.toLocaleString()}</span>
                     <button 
                       onClick={() => removeFromCart(item.product_id)}
@@ -394,6 +647,17 @@ const Cart = () => {
               ))}
               
               <div className="mt-6 pt-6 border-t">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Special Notes (Optional)</label>
+                  <textarea
+                    value={customerNotes}
+                    onChange={(e) => setCustomerNotes(e.target.value)}
+                    placeholder="Any special instructions for your order..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    rows="3"
+                  />
+                </div>
+                
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-xl font-bold">Total: RWF {total.toLocaleString()}</span>
                   <button 
@@ -413,6 +677,7 @@ const Cart = () => {
             total={total} 
             onClose={() => setShowPayment(false)}
             cartItems={cartItems}
+            customerNotes={customerNotes}
           />
         )}
       </div>
@@ -420,7 +685,7 @@ const Cart = () => {
   );
 };
 
-const PaymentModal = ({ total, onClose, cartItems }) => {
+const PaymentModal = ({ total, onClose, cartItems, customerNotes }) => {
   const [paymentMethod, setPaymentMethod] = useState('momo');
   const [phone, setPhone] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -542,10 +807,12 @@ const PaymentModal = ({ total, onClose, cartItems }) => {
         body: JSON.stringify({
           items: cartItems.map(item => ({
             product_id: item.product_id,
-            quantity: item.quantity
+            quantity: item.quantity,
+            unit: item.unit
           })),
           total_amount: paymentMethod === 'card' ? cardTotal : total,
-          payment_method: paymentMethod
+          payment_method: paymentMethod,
+          customer_notes: customerNotes
         })
       });
 
@@ -828,6 +1095,7 @@ const App = () => {
       <div className="App">
         <Header />
         <Hero />
+        <SpecialOffers />
         <Products />
         <Cart />
         <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
@@ -846,6 +1114,7 @@ const App = () => {
                 <ul className="space-y-2 text-gray-300">
                   <li><a href="#home" className="hover:text-white">Home</a></li>
                   <li><a href="#products" className="hover:text-white">Products</a></li>
+                  <li><a href="#offers" className="hover:text-white">Special Offers</a></li>
                   <li><a href="#cart" className="hover:text-white">Cart</a></li>
                   <li><a href="#admin" className="hover:text-white">Admin Panel</a></li>
                 </ul>
@@ -854,7 +1123,7 @@ const App = () => {
                 <h4 className="text-lg font-semibold mb-4">Contact</h4>
                 <p className="text-gray-300">
                   Phone: +250 783 654 454<br />
-                  Email: info@freshcutsmarket.com
+                  Email: info@freshcuts.rw
                 </p>
               </div>
             </div>
