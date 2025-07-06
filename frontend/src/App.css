@@ -345,3 +345,45 @@ textarea:focus {
     border-color: #4b5563;
   }
 }
+
+/* Admin Panel Integration */
+.admin-wrapper {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.admin-header {
+  background: white;
+  padding: 10px 20px;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.back-to-store-btn {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 0.9rem;
+}
+
+.back-to-store-btn:hover {
+  background: #2980b9;
+}
+
+/* Admin responsive adjustments */
+@media (max-width: 768px) {
+  .admin-header {
+    padding: 15px;
+  }
+  
+  .back-to-store-btn {
+    width: 100%;
+    padding: 12px;
+  }
+}
