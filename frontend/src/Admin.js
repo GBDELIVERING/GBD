@@ -3123,7 +3123,23 @@ const Admin = () => {
       { type: 'testimonial', name: 'Testimonial', icon: '💬', description: 'Customer testimonials', category: 'content' },
       { type: 'pricing', name: 'Pricing Table', icon: '💰', description: 'Pricing plans', category: 'business' },
       { type: 'features', name: 'Features List', icon: '✨', description: 'Feature highlights', category: 'business' },
-      { type: 'team', name: 'Team Member', icon: '👥', description: 'Team showcase', category: 'business' }
+      { type: 'team', name: 'Team Member', icon: '👥', description: 'Team showcase', category: 'business' },
+      // E-commerce Specific Components
+      { type: 'product_grid', name: 'Product Grid', icon: '🛍️', description: 'Display products in grid layout', category: 'ecommerce' },
+      { type: 'product_card', name: 'Product Card', icon: '📦', description: 'Individual product display', category: 'ecommerce' },
+      { type: 'product_slider', name: 'Product Slider', icon: '🎠', description: 'Sliding product showcase', category: 'ecommerce' },
+      { type: 'category_banner', name: 'Category Banner', icon: '🏷️', description: 'Category promotion banner', category: 'ecommerce' },
+      { type: 'featured_products', name: 'Featured Products', icon: '⭐', description: 'Highlighted product section', category: 'ecommerce' },
+      { type: 'product_search', name: 'Product Search', icon: '🔍', description: 'Advanced product search', category: 'ecommerce' },
+      { type: 'shopping_cart', name: 'Shopping Cart', icon: '🛒', description: 'Cart display widget', category: 'ecommerce' },
+      { type: 'wishlist', name: 'Wishlist', icon: '❤️', description: 'Product wishlist component', category: 'ecommerce' },
+      { type: 'product_reviews', name: 'Product Reviews', icon: '⭐', description: 'Customer review section', category: 'ecommerce' },
+      { type: 'checkout_form', name: 'Checkout Form', icon: '💳', description: 'Customizable checkout form', category: 'ecommerce' },
+      { type: 'price_filter', name: 'Price Filter', icon: '💰', description: 'Price range filter', category: 'ecommerce' },
+      { type: 'brand_showcase', name: 'Brand Showcase', icon: '🏢', description: 'Brand logo display', category: 'ecommerce' },
+      { type: 'sale_banner', name: 'Sale Banner', icon: '🔥', description: 'Promotional sale banner', category: 'ecommerce' },
+      { type: 'newsletter_signup', name: 'Newsletter Signup', icon: '📧', description: 'Email subscription form', category: 'ecommerce' },
+      { type: 'social_proof', name: 'Social Proof', icon: '👥', description: 'Customer count, reviews, etc.', category: 'ecommerce' }
     ];
 
     const componentCategories = [
@@ -3132,7 +3148,8 @@ const Admin = () => {
       { id: 'media', name: '🖼️ Media', description: 'Images, videos, galleries' },
       { id: 'interactive', name: '🔧 Interactive', description: 'Forms, buttons, maps' },
       { id: 'layout', name: '📐 Layout', description: 'Structure and spacing' },
-      { id: 'business', name: '💼 Business', description: 'Business-focused components' }
+      { id: 'business', name: '💼 Business', description: 'Business-focused components' },
+      { id: 'ecommerce', name: '🛒 E-commerce', description: 'Online store components' }
     ];
 
     const pageTemplates = [
