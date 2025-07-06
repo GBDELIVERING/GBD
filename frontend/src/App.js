@@ -1317,6 +1317,11 @@ const App = () => {
   const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
+    // Check URL for admin route
+    if (window.location.pathname === '/admin') {
+      setShowAdmin(true);
+    }
+
     // Handle auth links
     const handleAuthLink = (e) => {
       if (e.target.getAttribute('href') === '#auth') {
