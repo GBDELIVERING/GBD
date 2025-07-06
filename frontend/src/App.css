@@ -326,23 +326,147 @@ textarea:focus {
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .bg-white {
-    background-color: #1f2937;
-    color: #f9fafb;
+/* Quantity Selector Styles */
+.quantity-selector {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid #dc2626;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 15px 0;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.1);
+}
+
+.quantity-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.quantity-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quantity-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quantity-label {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.input-with-unit {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.quantity-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.quantity-input:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.unit-selector {
+  padding: 12px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.unit-selector:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.quantity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+}
+
+.limits-info {
+  text-align: center;
+}
+
+.limit-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.price-display {
+  text-align: center;
+}
+
+.calculated-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.discount-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .quantity-selector {
+    padding: 15px;
   }
   
-  .text-gray-600 {
-    color: #d1d5db;
+  .input-with-unit {
+    flex-direction: column;
   }
   
-  .text-gray-800 {
-    color: #f3f4f6;
-  }
-  
-  .border-gray-300 {
-    border-color: #4b5563;
+  .quantity-input,
+  .unit-selector {
+    width: 100%;
   }
 }
 
