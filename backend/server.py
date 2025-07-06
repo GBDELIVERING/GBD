@@ -1489,6 +1489,42 @@ async def get_public_ecommerce_settings():
     
     return public_settings
 
+# Maintenance Mode Management
+@app.post("/api/admin/maintenance")
+async def toggle_maintenance_mode(maintenance: MaintenanceSettings):
+    """Toggle maintenance mode"""
+    await db.ecommerce_settings.update_one(
+        {"type": "main"},
+        {
+            "$set": {
+                "maintenance_mode": maintenance.enabled,
+                "maintenance_message": maintenance.message,
+                "maintenance_title": maintenance.title,
+                "estimated_time": maintenance.estimated_time,
+                "contact_email": maintenance.contact_email,
+                "updated_at": datetime.utcnow()
+            }
+        },
+        upsert=True
+    )
+    
+    return {"message": f"Maintenance mode {'enabled' if maintenance.enabled else 'disabled'}"}
+
+@app.get("/api/admin/maintenance")
+async def get_maintenance_settings():
+    """Get maintenance settings"""
+    settings = await db.ecommerce_settings.find_one({"type": "main"})
+    if not settings:
+        return MaintenanceSettings().dict()
+    
+    return {
+        "enabled": settings.get("maintenance_mode", False),
+        "title": settings.get("maintenance_title", "Site Under Maintenance"),
+        "message": settings.get("maintenance_message", "We are currently performing scheduled maintenance. Please check back soon!"),
+        "estimated_time": settings.get("estimated_time"),
+        "contact_email": settings.get("contact_email")
+    }
+
 # Initialize delivery zones and settings
 @app.on_event("startup")
 async def startup_event():
