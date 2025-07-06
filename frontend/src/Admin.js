@@ -4239,10 +4239,16 @@ const Admin = () => {
         </div>
         <nav className="admin-nav">
           <button 
+            className={activeTab === 'uxbuilder' ? 'active' : ''}
+            onClick={() => setActiveTab('uxbuilder')}
+          >
+            🎨 Website Designer
+          </button>
+          <button 
             className={activeTab === 'dashboard' ? 'active' : ''}
             onClick={() => setActiveTab('dashboard')}
           >
-            📊 Dashboard
+            🏠 Dashboard
           </button>
           <button 
             className={activeTab === 'products' ? 'active' : ''}
@@ -4251,16 +4257,16 @@ const Admin = () => {
             📦 Products
           </button>
           <button 
-            className={activeTab === 'offers' ? 'active' : ''}
-            onClick={() => setActiveTab('offers')}
+            className={activeTab === 'special_offers' ? 'active' : ''}
+            onClick={() => setActiveTab('special_offers')}
           >
-            🏷️ Special Offers
+            ⭐ Special Offers
           </button>
           <button 
             className={activeTab === 'orders' ? 'active' : ''}
             onClick={() => setActiveTab('orders')}
           >
-            🛍️ Orders
+            📋 Orders
           </button>
           <button 
             className={activeTab === 'users' ? 'active' : ''}
@@ -4275,8 +4281,8 @@ const Admin = () => {
             💳 Payments
           </button>
           <button 
-            className={activeTab === 'emails' ? 'active' : ''}
-            onClick={() => setActiveTab('emails')}
+            className={activeTab === 'email_marketing' ? 'active' : ''}
+            onClick={() => setActiveTab('email_marketing')}
           >
             📧 Email Marketing
           </button>
@@ -4315,12 +4321,6 @@ const Admin = () => {
             onClick={() => setActiveTab('whatsapp')}
           >
             📱 WhatsApp Integration
-          </button>
-          <button 
-            className={activeTab === 'uxbuilder' ? 'active' : ''}
-            onClick={() => setActiveTab('uxbuilder')}
-          >
-            🎨 UX Builder
           </button>
           <button 
             className={activeTab === 'cms' ? 'active' : ''}
