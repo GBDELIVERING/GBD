@@ -2054,6 +2054,214 @@ async def create_page_template(template: PageTemplate):
     result = await db.page_templates.insert_one(template_data)
     return {"message": "Template created", "template_id": str(result.inserted_id)}
 
+# WooCommerce-like E-commerce APIs
+@app.get("/api/admin/product-attributes")
+async def get_product_attributes():
+    """Get product attributes"""
+    attributes = await db.product_attributes.find({}).to_list(100)
+    for attr in attributes:
+        attr["_id"] = str(attr["_id"])
+    return {"attributes": attributes}
+
+@app.post("/api/admin/product-attributes")
+async def create_product_attribute(attribute: ProductAttribute):
+    """Create product attribute"""
+    attr_data = attribute.dict()
+    attr_data["created_at"] = datetime.utcnow()
+    
+    result = await db.product_attributes.insert_one(attr_data)
+    return {"message": "Attribute created", "attribute_id": str(result.inserted_id)}
+
+@app.get("/api/admin/products/{product_id}/variations")
+async def get_product_variations(product_id: str):
+    """Get product variations"""
+    variations = await db.product_variations.find({"product_id": product_id}).to_list(100)
+    for variation in variations:
+        variation["_id"] = str(variation["_id"])
+    return {"variations": variations}
+
+@app.post("/api/admin/products/{product_id}/variations")
+async def create_product_variation(product_id: str, variation: ProductVariation):
+    """Create product variation"""
+    var_data = variation.dict()
+    var_data["product_id"] = product_id
+    var_data["created_at"] = datetime.utcnow()
+    
+    result = await db.product_variations.insert_one(var_data)
+    return {"message": "Variation created", "variation_id": str(result.inserted_id)}
+
+@app.get("/api/admin/coupons")
+async def get_coupons():
+    """Get coupons"""
+    coupons = await db.coupons.find({}).sort("created_at", -1).to_list(100)
+    for coupon in coupons:
+        coupon["_id"] = str(coupon["_id"])
+    return {"coupons": coupons}
+
+@app.post("/api/admin/coupons")
+async def create_coupon(coupon: Coupon):
+    """Create coupon"""
+    coupon_data = coupon.dict()
+    
+    # Check if coupon code already exists
+    existing = await db.coupons.find_one({"code": coupon_data["code"]})
+    if existing:
+        raise HTTPException(status_code=400, detail="Coupon code already exists")
+    
+    coupon_data["created_at"] = datetime.utcnow()
+    result = await db.coupons.insert_one(coupon_data)
+    return {"message": "Coupon created", "coupon_id": str(result.inserted_id)}
+
+@app.put("/api/admin/coupons/{coupon_id}")
+async def update_coupon(coupon_id: str, coupon: Coupon):
+    """Update coupon"""
+    coupon_data = coupon.dict()
+    coupon_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.coupons.update_one(
+        {"_id": ObjectId(coupon_id)},
+        {"$set": coupon_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+    
+    return {"message": "Coupon updated"}
+
+@app.delete("/api/admin/coupons/{coupon_id}")
+async def delete_coupon(coupon_id: str):
+    """Delete coupon"""
+    result = await db.coupons.delete_one({"_id": ObjectId(coupon_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+    
+    return {"message": "Coupon deleted"}
+
+@app.post("/api/public/validate-coupon")
+async def validate_coupon(coupon_code: str, cart_total: float):
+    """Validate coupon and calculate discount"""
+    coupon = await db.coupons.find_one({
+        "code": coupon_code.upper(),
+        "active": True
+    })
+    
+    if not coupon:
+        raise HTTPException(status_code=404, detail="Invalid coupon code")
+    
+    # Check expiry
+    if coupon.get("expiry_date") and coupon["expiry_date"] < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Coupon has expired")
+    
+    # Check usage limit
+    if coupon.get("usage_limit") and coupon.get("usage_count", 0) >= coupon["usage_limit"]:
+        raise HTTPException(status_code=400, detail="Coupon usage limit reached")
+    
+    # Check minimum amount
+    if coupon.get("minimum_amount") and cart_total < coupon["minimum_amount"]:
+        raise HTTPException(status_code=400, detail=f"Minimum order amount is RWF {coupon['minimum_amount']}")
+    
+    # Calculate discount
+    discount = 0
+    if coupon["type"] == "percentage":
+        discount = (cart_total * coupon["amount"]) / 100
+        if coupon.get("maximum_amount"):
+            discount = min(discount, coupon["maximum_amount"])
+    elif coupon["type"] == "fixed_cart":
+        discount = min(coupon["amount"], cart_total)
+    
+    return {
+        "valid": True,
+        "discount": discount,
+        "coupon": {
+            "code": coupon["code"],
+            "type": coupon["type"],
+            "amount": coupon["amount"],
+            "description": coupon.get("description", "")
+        }
+    }
+
+@app.get("/api/admin/shipping-zones")
+async def get_shipping_zones():
+    """Get shipping zones"""
+    zones = await db.shipping_zones.find({}).to_list(100)
+    for zone in zones:
+        zone["_id"] = str(zone["_id"])
+    return {"zones": zones}
+
+@app.post("/api/admin/shipping-zones")
+async def create_shipping_zone(zone: ShippingZone):
+    """Create shipping zone"""
+    zone_data = zone.dict()
+    zone_data["created_at"] = datetime.utcnow()
+    
+    result = await db.shipping_zones.insert_one(zone_data)
+    return {"message": "Shipping zone created", "zone_id": str(result.inserted_id)}
+
+@app.get("/api/admin/tax-rates")
+async def get_tax_rates():
+    """Get tax rates"""
+    rates = await db.tax_rates.find({}).to_list(100)
+    for rate in rates:
+        rate["_id"] = str(rate["_id"])
+    return {"rates": rates}
+
+@app.post("/api/admin/tax-rates")
+async def create_tax_rate(rate: TaxRate):
+    """Create tax rate"""
+    rate_data = rate.dict()
+    rate_data["created_at"] = datetime.utcnow()
+    
+    result = await db.tax_rates.insert_one(rate_data)
+    return {"message": "Tax rate created", "rate_id": str(result.inserted_id)}
+
+@app.get("/api/admin/analytics/overview")
+async def get_analytics_overview():
+    """Get analytics overview"""
+    try:
+        # Total orders
+        total_orders = await db.orders.count_documents({})
+        
+        # Total sales
+        pipeline = [
+            {"$group": {"_id": None, "total": {"$sum": "$total_amount"}}}
+        ]
+        sales_result = await db.orders.aggregate(pipeline).to_list(1)
+        total_sales = sales_result[0]["total"] if sales_result else 0
+        
+        # Top products
+        product_pipeline = [
+            {"$unwind": "$items"},
+            {"$group": {
+                "_id": "$items.product_id",
+                "total_quantity": {"$sum": "$items.quantity"},
+                "total_revenue": {"$sum": {"$multiply": ["$items.quantity", "$items.price"]}}
+            }},
+            {"$sort": {"total_quantity": -1}},
+            {"$limit": 5}
+        ]
+        top_products = await db.orders.aggregate(product_pipeline).to_list(5)
+        
+        # Recent orders
+        recent_orders = await db.orders.find({}).sort("created_at", -1).limit(5).to_list(5)
+        for order in recent_orders:
+            order["_id"] = str(order["_id"])
+        
+        return {
+            "total_orders": total_orders,
+            "total_sales": total_sales,
+            "top_products": top_products,
+            "recent_orders": recent_orders
+        }
+        
+    except Exception as e:
+        return {
+            "total_orders": 0,
+            "total_sales": 0,
+            "top_products": [],
+            "recent_orders": []
+        }
+
 # Initialize delivery zones and settings
 @app.on_event("startup")
 async def startup_event():
