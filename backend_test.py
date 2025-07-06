@@ -420,12 +420,450 @@ def test_orders(token, product_id):
         record_test("Get Orders", False, "Failed to get orders", response)
         record_test("Get Orders", False, "Failed to get orders", response)
 
+# Test Slider Management APIs
+def test_slider_management(admin_token):
+    print("\n=== Testing Slider Management APIs ===\n")
+    
+    if not admin_token:
+        record_test("Get All Sliders", False, "Skipped due to missing admin token")
+        record_test("Create Slider", False, "Skipped due to missing admin token")
+        record_test("Update Slider", False, "Skipped due to missing admin token")
+        record_test("Delete Slider", False, "Skipped due to missing admin token")
+        record_test("Get Public Sliders", False, "Skipped due to missing admin token")
+        return
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test GET /api/admin/sliders
+    response = requests.get(f"{API_URL}/admin/sliders", headers=headers)
+    get_sliders_success = response.status_code == 200
+    
+    if get_sliders_success:
+        data = response.json()
+        sliders = data.get("sliders", [])
+        record_test("Get All Sliders", True, f"Retrieved {len(sliders)} sliders", response)
+    else:
+        record_test("Get All Sliders", False, "Failed to get sliders", response)
+    
+    # Test POST /api/admin/sliders
+    slider_data = {
+        "title": f"Test Slider {random_string()}",
+        "subtitle": "Automated Test Subtitle",
+        "description": "This slider was created by automated tests",
+        "image_url": "https://example.com/test-slider.jpg",
+        "button_text": "Learn More",
+        "button_link": "/products",
+        "order": 1,
+        "active": True
+    }
+    
+    response = requests.post(f"{API_URL}/admin/sliders", json=slider_data, headers=headers)
+    create_slider_success = response.status_code == 200
+    slider_id = None
+    
+    if create_slider_success:
+        data = response.json()
+        slider_id = data.get("slider_id")
+        record_test("Create Slider", True, f"Created slider with ID: {slider_id}", response)
+    else:
+        record_test("Create Slider", False, "Failed to create slider", response)
+    
+    # Test PUT /api/admin/sliders/{slider_id}
+    if slider_id:
+        update_data = {
+            "title": f"Updated Slider {random_string()}",
+            "subtitle": "Updated Subtitle",
+            "description": "This slider was updated by automated tests",
+            "image_url": "https://example.com/updated-slider.jpg",
+            "button_text": "Shop Now",
+            "button_link": "/shop",
+            "order": 2,
+            "active": True
+        }
+        
+        response = requests.put(f"{API_URL}/admin/sliders/{slider_id}", json=update_data, headers=headers)
+        update_slider_success = response.status_code == 200
+        
+        if update_slider_success:
+            record_test("Update Slider", True, f"Updated slider with ID: {slider_id}", response)
+        else:
+            record_test("Update Slider", False, f"Failed to update slider with ID: {slider_id}", response)
+    else:
+        record_test("Update Slider", False, "Skipped due to missing slider ID")
+    
+    # Test GET /api/public/sliders
+    response = requests.get(f"{API_URL}/public/sliders")
+    get_public_sliders_success = response.status_code == 200
+    
+    if get_public_sliders_success:
+        data = response.json()
+        sliders = data.get("sliders", [])
+        record_test("Get Public Sliders", True, f"Retrieved {len(sliders)} public sliders", response)
+    else:
+        record_test("Get Public Sliders", False, "Failed to get public sliders", response)
+    
+    # Test DELETE /api/admin/sliders/{slider_id}
+    if slider_id:
+        response = requests.delete(f"{API_URL}/admin/sliders/{slider_id}", headers=headers)
+        delete_slider_success = response.status_code == 200
+        
+        if delete_slider_success:
+            record_test("Delete Slider", True, f"Deleted slider with ID: {slider_id}", response)
+        else:
+            record_test("Delete Slider", False, f"Failed to delete slider with ID: {slider_id}", response)
+    else:
+        record_test("Delete Slider", False, "Skipped due to missing slider ID")
+
+# Test Website Builder/Sections APIs
+def test_sections_management(admin_token):
+    print("\n=== Testing Website Builder/Sections APIs ===\n")
+    
+    if not admin_token:
+        record_test("Get All Sections", False, "Skipped due to missing admin token")
+        record_test("Create Section", False, "Skipped due to missing admin token")
+        record_test("Update Section", False, "Skipped due to missing admin token")
+        record_test("Delete Section", False, "Skipped due to missing admin token")
+        record_test("Get Public Sections", False, "Skipped due to missing admin token")
+        return
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test GET /api/admin/sections
+    response = requests.get(f"{API_URL}/admin/sections", headers=headers)
+    get_sections_success = response.status_code == 200
+    
+    if get_sections_success:
+        data = response.json()
+        sections = data.get("sections", [])
+        record_test("Get All Sections", True, f"Retrieved {len(sections)} sections", response)
+    else:
+        record_test("Get All Sections", False, "Failed to get sections", response)
+    
+    # Test POST /api/admin/sections
+    section_data = {
+        "section_id": f"test_section_{random_string()}",
+        "type": "hero",
+        "title": f"Test Section {random_string()}",
+        "content": {
+            "heading": "Welcome to our store",
+            "subheading": "Find the best products here",
+            "background_image": "https://example.com/test-bg.jpg",
+            "cta_text": "Shop Now",
+            "cta_link": "/shop"
+        },
+        "order": 1,
+        "active": True
+    }
+    
+    response = requests.post(f"{API_URL}/admin/sections", json=section_data, headers=headers)
+    create_section_success = response.status_code == 200
+    section_id = None
+    
+    if create_section_success:
+        data = response.json()
+        section_id = data.get("section_id")
+        record_test("Create Section", True, f"Created section with ID: {section_id}", response)
+    else:
+        record_test("Create Section", False, "Failed to create section", response)
+    
+    # Test PUT /api/admin/sections/{section_id}
+    if section_id:
+        update_data = {
+            "section_id": section_id,
+            "type": "features",
+            "title": f"Updated Section {random_string()}",
+            "content": {
+                "heading": "Our Features",
+                "features": [
+                    {"title": "Quality", "description": "High quality products", "icon": "star"},
+                    {"title": "Fast Delivery", "description": "Quick delivery options", "icon": "truck"}
+                ]
+            },
+            "order": 2,
+            "active": True
+        }
+        
+        response = requests.put(f"{API_URL}/admin/sections/{section_id}", json=update_data, headers=headers)
+        update_section_success = response.status_code == 200
+        
+        if update_section_success:
+            record_test("Update Section", True, f"Updated section with ID: {section_id}", response)
+        else:
+            record_test("Update Section", False, f"Failed to update section with ID: {section_id}", response)
+    else:
+        record_test("Update Section", False, "Skipped due to missing section ID")
+    
+    # Test GET /api/public/sections
+    response = requests.get(f"{API_URL}/public/sections")
+    get_public_sections_success = response.status_code == 200
+    
+    if get_public_sections_success:
+        data = response.json()
+        sections = data.get("sections", [])
+        record_test("Get Public Sections", True, f"Retrieved {len(sections)} public sections", response)
+    else:
+        record_test("Get Public Sections", False, "Failed to get public sections", response)
+    
+    # Test DELETE /api/admin/sections/{section_id}
+    if section_id:
+        response = requests.delete(f"{API_URL}/admin/sections/{section_id}", headers=headers)
+        delete_section_success = response.status_code == 200
+        
+        if delete_section_success:
+            record_test("Delete Section", True, f"Deleted section with ID: {section_id}", response)
+        else:
+            record_test("Delete Section", False, f"Failed to delete section with ID: {section_id}", response)
+    else:
+        record_test("Delete Section", False, "Skipped due to missing section ID")
+
+# Test Maintenance Mode APIs
+def test_maintenance_mode(admin_token):
+    print("\n=== Testing Maintenance Mode APIs ===\n")
+    
+    if not admin_token:
+        record_test("Get Maintenance Settings", False, "Skipped due to missing admin token")
+        record_test("Toggle Maintenance Mode", False, "Skipped due to missing admin token")
+        record_test("Maintenance Mode Middleware", False, "Skipped due to missing admin token")
+        return
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test GET /api/admin/maintenance
+    response = requests.get(f"{API_URL}/admin/maintenance", headers=headers)
+    get_maintenance_success = response.status_code == 200
+    
+    if get_maintenance_success:
+        data = response.json()
+        enabled = data.get("enabled", False)
+        record_test("Get Maintenance Settings", True, f"Maintenance mode is currently: {'enabled' if enabled else 'disabled'}", response)
+    else:
+        record_test("Get Maintenance Settings", False, "Failed to get maintenance settings", response)
+    
+    # Test POST /api/admin/maintenance (enable maintenance mode)
+    maintenance_data = {
+        "enabled": True,
+        "title": "Test Maintenance Mode",
+        "message": "This is a test of maintenance mode",
+        "estimated_time": "30 minutes",
+        "contact_email": "test@example.com"
+    }
+    
+    response = requests.post(f"{API_URL}/admin/maintenance", json=maintenance_data, headers=headers)
+    enable_maintenance_success = response.status_code == 200
+    
+    if enable_maintenance_success:
+        record_test("Enable Maintenance Mode", True, "Maintenance mode enabled successfully", response)
+    else:
+        record_test("Enable Maintenance Mode", False, "Failed to enable maintenance mode", response)
+    
+    # Test maintenance mode middleware (should return 503 for public endpoints)
+    response = requests.get(f"{API_URL}/products")
+    maintenance_middleware_working = response.status_code == 503
+    
+    if maintenance_middleware_working:
+        record_test("Maintenance Mode Middleware", True, "Middleware correctly returned 503 for public endpoint", response)
+    else:
+        record_test("Maintenance Mode Middleware", False, "Middleware failed to block public endpoint", response)
+    
+    # Admin endpoints should still be accessible
+    response = requests.get(f"{API_URL}/admin/maintenance", headers=headers)
+    admin_access_working = response.status_code == 200
+    
+    if admin_access_working:
+        record_test("Admin Bypass for Maintenance", True, "Admin can still access endpoints during maintenance", response)
+    else:
+        record_test("Admin Bypass for Maintenance", False, "Admin cannot access endpoints during maintenance", response)
+    
+    # Test POST /api/admin/maintenance (disable maintenance mode)
+    maintenance_data["enabled"] = False
+    
+    response = requests.post(f"{API_URL}/admin/maintenance", json=maintenance_data, headers=headers)
+    disable_maintenance_success = response.status_code == 200
+    
+    if disable_maintenance_success:
+        record_test("Disable Maintenance Mode", True, "Maintenance mode disabled successfully", response)
+    else:
+        record_test("Disable Maintenance Mode", False, "Failed to disable maintenance mode", response)
+    
+    # Verify public endpoints are accessible again
+    response = requests.get(f"{API_URL}/products")
+    public_access_restored = response.status_code == 200
+    
+    if public_access_restored:
+        record_test("Public Access After Maintenance", True, "Public endpoints accessible after disabling maintenance", response)
+    else:
+        record_test("Public Access After Maintenance", False, "Public endpoints still blocked after disabling maintenance", response)
+
+# Test WhatsApp Integration APIs
+def test_whatsapp_integration(admin_token):
+    print("\n=== Testing WhatsApp Integration APIs ===\n")
+    
+    if not admin_token:
+        record_test("Get WhatsApp Settings", False, "Skipped due to missing admin token")
+        record_test("Update WhatsApp Settings", False, "Skipped due to missing admin token")
+        record_test("Generate WhatsApp Order Message", False, "Skipped due to missing admin token")
+        return
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test GET /api/admin/whatsapp/settings
+    response = requests.get(f"{API_URL}/admin/whatsapp/settings", headers=headers)
+    get_whatsapp_settings_success = response.status_code == 200
+    
+    if get_whatsapp_settings_success:
+        data = response.json()
+        enabled = data.get("enabled", False)
+        record_test("Get WhatsApp Settings", True, f"WhatsApp integration is currently: {'enabled' if enabled else 'disabled'}", response)
+    else:
+        record_test("Get WhatsApp Settings", False, "Failed to get WhatsApp settings", response)
+    
+    # Test POST /api/admin/whatsapp/settings
+    whatsapp_settings = {
+        "enabled": True,
+        "phone_number": "+250783654454",
+        "auto_send": False,
+        "message_template": "default"
+    }
+    
+    response = requests.post(f"{API_URL}/admin/whatsapp/settings", json=whatsapp_settings, headers=headers)
+    update_whatsapp_settings_success = response.status_code == 200
+    
+    if update_whatsapp_settings_success:
+        record_test("Update WhatsApp Settings", True, "WhatsApp settings updated successfully", response)
+    else:
+        record_test("Update WhatsApp Settings", False, "Failed to update WhatsApp settings", response)
+    
+    # Create a test order to use with WhatsApp integration
+    # First, get a product ID
+    response = requests.get(f"{API_URL}/products")
+    products = response.json().get("products", [])
+    
+    if products:
+        product_id = products[0].get("_id")
+        
+        # Create a test order
+        order_data = {
+            "user_id": "test_user",
+            "items": [{"product_id": product_id, "quantity": 2}],
+            "total_amount": 100.0,
+            "payment_method": "momo",
+            "customer_notes": "Test order for WhatsApp integration"
+        }
+        
+        response = requests.post(f"{API_URL}/orders", json=order_data, headers=headers)
+        
+        if response.status_code == 200:
+            order_id = response.json().get("order_id")
+            
+            # Test POST /api/admin/whatsapp/send-order
+            params = {
+                "order_id": order_id,
+                "phone_number": "+250783654454"
+            }
+            
+            response = requests.post(f"{API_URL}/admin/whatsapp/send-order", params=params, headers=headers)
+            generate_whatsapp_message_success = response.status_code == 200
+            
+            if generate_whatsapp_message_success:
+                data = response.json()
+                whatsapp_url = data.get("whatsapp_url")
+                formatted_message = data.get("formatted_message")
+                record_test("Generate WhatsApp Order Message", True, f"Generated WhatsApp message for order: {order_id}", response)
+            else:
+                record_test("Generate WhatsApp Order Message", False, f"Failed to generate WhatsApp message for order: {order_id}", response)
+        else:
+            record_test("Generate WhatsApp Order Message", False, "Skipped due to failure to create test order")
+    else:
+        record_test("Generate WhatsApp Order Message", False, "Skipped due to no products available")
+
+# Test Enhanced E-commerce Settings
+def test_ecommerce_settings(admin_token):
+    print("\n=== Testing Enhanced E-commerce Settings ===\n")
+    
+    if not admin_token:
+        record_test("Get E-commerce Settings", False, "Skipped due to missing admin token")
+        record_test("Update E-commerce Settings", False, "Skipped due to missing admin token")
+        record_test("Get Public E-commerce Settings", False, "Skipped due to missing admin token")
+        return
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test GET /api/admin/ecommerce-settings
+    response = requests.get(f"{API_URL}/admin/ecommerce-settings", headers=headers)
+    get_ecommerce_settings_success = response.status_code == 200
+    
+    if get_ecommerce_settings_success:
+        data = response.json()
+        store_name = data.get("store_name")
+        maintenance_mode = data.get("maintenance_mode", False)
+        record_test("Get E-commerce Settings", True, f"Retrieved settings for store: {store_name}", response)
+        
+        # Verify maintenance mode fields are present
+        if "maintenance_mode" in data and "maintenance_message" in data:
+            record_test("Maintenance Fields in E-commerce Settings", True, 
+                       f"Maintenance fields present: mode={maintenance_mode}, message={data.get('maintenance_message')}")
+        else:
+            record_test("Maintenance Fields in E-commerce Settings", False, 
+                       "Maintenance fields missing from e-commerce settings")
+    else:
+        record_test("Get E-commerce Settings", False, "Failed to get e-commerce settings", response)
+    
+    # Test POST /api/admin/ecommerce-settings
+    ecommerce_settings = {
+        "store_name": "Fresh Cuts Market Test",
+        "store_tagline": "Premium Quality Meats & Fresh Groceries - Test",
+        "primary_color": "#dc2626",
+        "secondary_color": "#991b1b",
+        "currency": "RWF",
+        "currency_symbol": "RWF",
+        "tax_rate": 0.0,
+        "enable_delivery": True,
+        "enable_pickup": True,
+        "maintenance_mode": False,
+        "maintenance_message": "We are currently performing scheduled maintenance. Please check back soon!",
+        "checkout_fields": {
+            "require_phone": True,
+            "require_address": True,
+            "allow_notes": True
+        },
+        "order_statuses": ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"]
+    }
+    
+    response = requests.post(f"{API_URL}/admin/ecommerce-settings", json=ecommerce_settings, headers=headers)
+    update_ecommerce_settings_success = response.status_code == 200
+    
+    if update_ecommerce_settings_success:
+        record_test("Update E-commerce Settings", True, "E-commerce settings updated successfully", response)
+    else:
+        record_test("Update E-commerce Settings", False, "Failed to update e-commerce settings", response)
+    
+    # Test GET /api/public/ecommerce-settings
+    response = requests.get(f"{API_URL}/public/ecommerce-settings")
+    get_public_ecommerce_settings_success = response.status_code == 200
+    
+    if get_public_ecommerce_settings_success:
+        data = response.json()
+        store_name = data.get("store_name")
+        
+        # Verify maintenance information is included in public settings
+        if "maintenance_mode" in data and "maintenance_message" in data:
+            record_test("Get Public E-commerce Settings", True, 
+                       f"Retrieved public settings for store: {store_name} with maintenance info", response)
+        else:
+            record_test("Get Public E-commerce Settings", True, 
+                       f"Retrieved public settings for store: {store_name}, but maintenance info missing", response)
+    else:
+        record_test("Get Public E-commerce Settings", False, "Failed to get public e-commerce settings", response)
+
 # Run all tests
 def run_tests():
     print("\n===== STARTING BUTCHERY E-COMMERCE API TESTS =====\n")
     
     # Test authentication endpoints
     token, user_id = test_auth()
+    
+    # Test admin authentication
+    admin_token = test_admin_auth()
     
     # Test product endpoints
     product_id = test_products()
@@ -438,6 +876,13 @@ def run_tests():
     
     # Test order endpoints
     test_orders(token, product_id)
+    
+    # Test new advanced admin panel features
+    test_slider_management(admin_token)
+    test_sections_management(admin_token)
+    test_maintenance_mode(admin_token)
+    test_whatsapp_integration(admin_token)
+    test_ecommerce_settings(admin_token)
     
     # Print summary
     print("\n===== TEST SUMMARY =====")
