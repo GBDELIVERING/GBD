@@ -105,6 +105,168 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+# File Upload Route
+@app.post("/api/admin/upload-image")
+async def upload_image(file: UploadFile = File(...)):
+    """Upload product image and return base64 encoded string"""
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Convert to base64
+        base64_encoded = base64.b64encode(content).decode('utf-8')
+        
+        # Get file extension for proper mime type
+        file_extension = file.filename.split('.')[-1].lower()
+        mime_types = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp'
+        }
+        
+        mime_type = mime_types.get(file_extension, 'image/jpeg')
+        
+        # Create data URL
+        data_url = f"data:{mime_type};base64,{base64_encoded}"
+        
+        return {
+            "success": True,
+            "image_url": data_url,
+            "file_name": file.filename,
+            "file_size": len(content)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error uploading image: {str(e)}")
+
+# Google OAuth Routes (Traditional method)
+@app.get("/api/auth/google/login")
+async def google_login(request: Request):
+    """Initiate Google OAuth login"""
+    redirect_uri = f"{request.base_url}api/auth/google/callback"
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@app.get("/api/auth/google/callback")
+async def google_callback(request: Request):
+    """Handle Google OAuth callback"""
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = await oauth.google.parse_id_token(request, token)
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({"email": user_info['email']})
+        
+        if existing_user:
+            # User exists, login
+            jwt_token = create_jwt_token(str(existing_user["_id"]))
+            return {"token": jwt_token, "user": user_info}
+        else:
+            # Create new user
+            user_data = {
+                "email": user_info['email'],
+                "name": user_info['name'],
+                "picture": user_info.get('picture'),
+                "auth_provider": "google",
+                "google_id": user_info['sub'],
+                "created_at": datetime.utcnow()
+            }
+            
+            result = await db.users.insert_one(user_data)
+            jwt_token = create_jwt_token(str(result.inserted_id))
+            
+            return {"token": jwt_token, "user": user_info}
+            
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Google authentication failed: {str(e)}")
+
+# Facebook OAuth Routes
+@app.post("/api/auth/facebook/login")
+async def facebook_login(auth_request: FacebookAuthRequest):
+    """Handle Facebook OAuth login"""
+    try:
+        # Verify Facebook token
+        fb_response = requests.get(
+            f"https://graph.facebook.com/me?access_token={auth_request.access_token}&fields=id,name,email,picture"
+        )
+        
+        if fb_response.status_code != 200:
+            raise HTTPException(status_code=400, detail="Invalid Facebook token")
+        
+        user_info = fb_response.json()
+        
+        if not user_info.get('email'):
+            raise HTTPException(status_code=400, detail="Email permission required")
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({"email": user_info['email']})
+        
+        if existing_user:
+            # User exists, login
+            jwt_token = create_jwt_token(str(existing_user["_id"]))
+            return {"token": jwt_token, "user": user_info}
+        else:
+            # Create new user
+            user_data = {
+                "email": user_info['email'],
+                "name": user_info['name'],
+                "picture": user_info.get('picture', {}).get('data', {}).get('url'),
+                "auth_provider": "facebook",
+                "facebook_id": user_info['id'],
+                "created_at": datetime.utcnow()
+            }
+            
+            result = await db.users.insert_one(user_data)
+            jwt_token = create_jwt_token(str(result.inserted_id))
+            
+            return {"token": jwt_token, "user": user_info}
+            
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Facebook authentication failed: {str(e)}")
+
+# Enhanced Bulk Product Update Route
+@app.put("/api/admin/products/bulk-table")
+async def bulk_update_products_table(bulk_update: BulkProductUpdate):
+    """Bulk update products using table format"""
+    updated_count = 0
+    errors = []
+    
+    for update_data in bulk_update.updates:
+        try:
+            product_id = update_data.pop('_id', None)
+            if not product_id:
+                errors.append("Missing product ID in update")
+                continue
+                
+            # Clean update data
+            clean_updates = {}
+            for key, value in update_data.items():
+                if value is not None and value != '':
+                    if key in ['price', 'stock', 'weight', 'min_quantity', 'max_quantity', 'discount_percentage']:
+                        clean_updates[key] = float(value) if value else 0
+                    else:
+                        clean_updates[key] = value
+            
+            if clean_updates:
+                clean_updates["updated_at"] = datetime.utcnow()
+                
+                result = await db.products.update_one(
+                    {"_id": ObjectId(product_id)},
+                    {"$set": clean_updates}
+                )
+                
+                if result.modified_count > 0:
+                    updated_count += 1
+                    
+        except Exception as e:
+            errors.append(f"Error updating product {product_id}: {str(e)}")
+    
+    return {
+        "message": f"Bulk update completed",
+        "updated_count": updated_count,
+        "errors": errors
+    }
 class Product(BaseModel):
     name: str
     description: str
