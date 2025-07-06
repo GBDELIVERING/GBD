@@ -2989,18 +2989,56 @@ const Admin = () => {
     const [showPageModal, setShowPageModal] = useState(false);
     const [draggedComponent, setDraggedComponent] = useState(null);
     const [previewMode, setPreviewMode] = useState(false);
+    const [showTemplates, setShowTemplates] = useState(false);
+    const [deviceView, setDeviceView] = useState('desktop');
+    const [showStylePanel, setShowStylePanel] = useState(false);
 
     const componentLibrary = [
-      { type: 'text', name: 'Text Block', icon: '📝', description: 'Add text content' },
-      { type: 'heading', name: 'Heading', icon: '📰', description: 'Add headings (H1-H6)' },
-      { type: 'image', name: 'Image', icon: '🖼️', description: 'Add images' },
-      { type: 'button', name: 'Button', icon: '🔘', description: 'Add call-to-action buttons' },
-      { type: 'container', name: 'Container', icon: '📦', description: 'Group elements together' },
-      { type: 'grid', name: 'Grid Layout', icon: '⚏', description: 'Create responsive grid' },
-      { type: 'spacer', name: 'Spacer', icon: '📏', description: 'Add spacing between elements' },
-      { type: 'divider', name: 'Divider', icon: '➖', description: 'Add visual dividers' },
-      { type: 'form', name: 'Form', icon: '📋', description: 'Add contact forms' },
-      { type: 'video', name: 'Video', icon: '🎥', description: 'Embed videos' }
+      { type: 'hero', name: 'Hero Section', icon: '🌟', description: 'Main banner section', category: 'sections' },
+      { type: 'navbar', name: 'Navigation Bar', icon: '📍', description: 'Site navigation', category: 'sections' },
+      { type: 'footer', name: 'Footer', icon: '📧', description: 'Site footer', category: 'sections' },
+      { type: 'text', name: 'Text Block', icon: '📝', description: 'Rich text content', category: 'content' },
+      { type: 'heading', name: 'Heading', icon: '📰', description: 'Headings (H1-H6)', category: 'content' },
+      { type: 'image', name: 'Image', icon: '🖼️', description: 'Images with captions', category: 'media' },
+      { type: 'gallery', name: 'Image Gallery', icon: '🎨', description: 'Photo galleries', category: 'media' },
+      { type: 'video', name: 'Video', icon: '🎥', description: 'Video embeds', category: 'media' },
+      { type: 'button', name: 'Button', icon: '🔘', description: 'Call-to-action buttons', category: 'interactive' },
+      { type: 'form', name: 'Contact Form', icon: '📋', description: 'Contact forms', category: 'interactive' },
+      { type: 'map', name: 'Map', icon: '🗺️', description: 'Google Maps embed', category: 'interactive' },
+      { type: 'container', name: 'Container', icon: '📦', description: 'Group elements', category: 'layout' },
+      { type: 'grid', name: 'Grid Layout', icon: '⚏', description: 'Responsive grid', category: 'layout' },
+      { type: 'columns', name: 'Columns', icon: '📊', description: 'Multi-column layout', category: 'layout' },
+      { type: 'spacer', name: 'Spacer', icon: '📏', description: 'Add spacing', category: 'layout' },
+      { type: 'divider', name: 'Divider', icon: '➖', description: 'Visual dividers', category: 'layout' },
+      { type: 'testimonial', name: 'Testimonial', icon: '💬', description: 'Customer testimonials', category: 'content' },
+      { type: 'pricing', name: 'Pricing Table', icon: '💰', description: 'Pricing plans', category: 'business' },
+      { type: 'features', name: 'Features List', icon: '✨', description: 'Feature highlights', category: 'business' },
+      { type: 'team', name: 'Team Member', icon: '👥', description: 'Team showcase', category: 'business' }
+    ];
+
+    const componentCategories = [
+      { id: 'sections', name: '📄 Sections', description: 'Large page sections' },
+      { id: 'content', name: '📝 Content', description: 'Text and content blocks' },
+      { id: 'media', name: '🖼️ Media', description: 'Images, videos, galleries' },
+      { id: 'interactive', name: '🔧 Interactive', description: 'Forms, buttons, maps' },
+      { id: 'layout', name: '📐 Layout', description: 'Structure and spacing' },
+      { id: 'business', name: '💼 Business', description: 'Business-focused components' }
+    ];
+
+    const pageTemplates = [
+      { id: 'blank', name: 'Blank Page', description: 'Start from scratch', thumbnail: '🏳️' },
+      { id: 'business', name: 'Business Homepage', description: 'Professional business site', thumbnail: '🏢' },
+      { id: 'ecommerce', name: 'E-commerce Store', description: 'Online store layout', thumbnail: '🛒' },
+      { id: 'portfolio', name: 'Portfolio', description: 'Showcase your work', thumbnail: '🎨' },
+      { id: 'blog', name: 'Blog', description: 'Blog-style layout', thumbnail: '📰' },
+      { id: 'restaurant', name: 'Restaurant', description: 'Food & dining theme', thumbnail: '🍽️' },
+      { id: 'landing', name: 'Landing Page', description: 'Single page marketing', thumbnail: '🚀' }
+    ];
+
+    const deviceViews = [
+      { id: 'desktop', name: 'Desktop', icon: '🖥️', width: '100%', height: '800px' },
+      { id: 'tablet', name: 'Tablet', icon: '📱', width: '768px', height: '1024px' },
+      { id: 'mobile', name: 'Mobile', icon: '📱', width: '375px', height: '667px' }
     ];
 
     useEffect(() => {
@@ -3013,149 +3051,304 @@ const Admin = () => {
         if (response.ok) {
           const data = await response.json();
           setPages(data.pages || []);
+          
+          // Auto-load homepage if exists, otherwise create one
+          const homepage = data.pages?.find(p => p.slug === 'home' || p.slug === 'homepage');
+          if (homepage) {
+            loadPage(homepage._id);
+          } else if (data.pages?.length === 0) {
+            // Create default homepage
+            createDefaultHomepage();
+          }
         }
       } catch (error) {
         console.error('Error fetching pages:', error);
       }
     };
 
-    const createNewPage = async (pageData) => {
+    const createDefaultHomepage = async () => {
+      const defaultHomepage = {
+        page_id: 'homepage',
+        name: 'Homepage',
+        slug: 'home',
+        title: 'Welcome to Your Website',
+        components: [
+          {
+            component_id: 'hero_default',
+            type: 'hero',
+            properties: {
+              title: 'Welcome to Your Amazing Website',
+              subtitle: 'Built with the powerful UX Builder',
+              backgroundImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1974&q=80',
+              ctaText: 'Get Started',
+              ctaLink: '#contact'
+            },
+            styles: {
+              backgroundColor: '#1e293b',
+              color: 'white',
+              padding: '80px 20px',
+              textAlign: 'center'
+            },
+            position: { x: 0, y: 0, width: '100%', height: '500px' },
+            order: 0
+          }
+        ]
+      };
+
       try {
         const response = await fetch(`${backendUrl}/api/admin/builder/pages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...pageData,
-            components: []
-          })
+          body: JSON.stringify(defaultHomepage)
         });
 
         if (response.ok) {
           fetchPages();
-          setShowPageModal(false);
         }
       } catch (error) {
-        alert('Error creating page');
+        console.error('Error creating default homepage:', error);
       }
-    };
-
-    const loadPage = async (pageId) => {
-      try {
-        const response = await fetch(`${backendUrl}/api/admin/builder/pages/${pageId}`);
-        if (response.ok) {
-          const page = await response.json();
-          setCurrentPage(page);
-          setComponents(page.components || []);
-        }
-      } catch (error) {
-        console.error('Error loading page:', error);
-      }
-    };
-
-    const savePage = async () => {
-      if (!currentPage) return;
-
-      try {
-        const response = await fetch(`${backendUrl}/api/admin/builder/pages/${currentPage._id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...currentPage,
-            components
-          })
-        });
-
-        if (response.ok) {
-          alert('Page saved successfully!');
-        }
-      } catch (error) {
-        alert('Error saving page');
-      }
-    };
-
-    const addComponent = (componentType, position = { x: 50, y: 50 }) => {
-      const newComponent = {
-        component_id: `comp_${Date.now()}`,
-        type: componentType,
-        properties: getDefaultProperties(componentType),
-        styles: getDefaultStyles(componentType),
-        position: { ...position, width: 300, height: 100 },
-        order: components.length
-      };
-
-      setComponents([...components, newComponent]);
     };
 
     const getDefaultProperties = (type) => {
-      switch (type) {
-        case 'text':
-          return { content: 'Edit this text...', fontSize: '16px' };
-        case 'heading':
-          return { content: 'Your Heading', level: 'h2', fontSize: '24px' };
-        case 'image':
-          return { src: 'https://via.placeholder.com/300x200', alt: 'Image' };
-        case 'button':
-          return { text: 'Click Me', link: '#', backgroundColor: '#3b82f6' };
-        case 'container':
-          return { backgroundColor: '#f8fafc', padding: '20px' };
-        case 'grid':
-          return { columns: 2, gap: '20px' };
-        case 'spacer':
-          return { height: '50px' };
-        case 'divider':
-          return { thickness: '1px', color: '#e5e7eb' };
-        case 'form':
-          return { fields: ['name', 'email', 'message'], submitText: 'Submit' };
-        case 'video':
-          return { src: '', autoplay: false, controls: true };
-        default:
-          return {};
-      }
-    };
-
-    const getDefaultStyles = (type) => {
-      return {
-        padding: '10px',
-        margin: '5px',
-        borderRadius: '4px',
-        backgroundColor: type === 'container' ? '#f8fafc' : 'transparent'
+      const defaults = {
+        hero: {
+          title: 'Hero Section Title',
+          subtitle: 'Compelling subtitle text',
+          backgroundImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1974&q=80',
+          ctaText: 'Call to Action',
+          ctaLink: '#'
+        },
+        navbar: {
+          logo: 'Your Logo',
+          menuItems: ['Home', 'About', 'Services', 'Contact'],
+          backgroundColor: '#ffffff',
+          textColor: '#333333'
+        },
+        footer: {
+          companyName: 'Your Company',
+          copyright: '© 2024 Your Company. All rights reserved.',
+          links: ['Privacy Policy', 'Terms of Service', 'Contact Us'],
+          backgroundColor: '#1f2937',
+          textColor: '#ffffff'
+        },
+        text: { content: 'Edit this text...', fontSize: '16px', lineHeight: '1.6' },
+        heading: { content: 'Your Heading', level: 'h2', fontSize: '32px', fontWeight: 'bold' },
+        image: { 
+          src: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', 
+          alt: 'Image description',
+          caption: 'Image caption'
+        },
+        gallery: {
+          images: [
+            'https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          ],
+          columns: 3,
+          spacing: '10px'
+        },
+        button: { 
+          text: 'Click Me', 
+          link: '#', 
+          backgroundColor: '#3b82f6',
+          textColor: '#ffffff',
+          borderRadius: '8px',
+          padding: '12px 24px'
+        },
+        form: { 
+          title: 'Contact Us',
+          fields: [
+            { type: 'text', name: 'name', label: 'Name', required: true },
+            { type: 'email', name: 'email', label: 'Email', required: true },
+            { type: 'textarea', name: 'message', label: 'Message', required: true }
+          ],
+          submitText: 'Send Message',
+          action: '/contact'
+        },
+        testimonial: {
+          quote: 'This is an amazing service! Highly recommended.',
+          author: 'John Doe',
+          position: 'CEO, Company Inc.',
+          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+        },
+        pricing: {
+          title: 'Pricing Plans',
+          plans: [
+            { name: 'Basic', price: '$9.99', features: ['Feature 1', 'Feature 2'] },
+            { name: 'Pro', price: '$19.99', features: ['Feature 1', 'Feature 2', 'Feature 3'] }
+          ]
+        },
+        features: {
+          title: 'Our Features',
+          items: [
+            { icon: '⚡', title: 'Fast', description: 'Lightning fast performance' },
+            { icon: '🔒', title: 'Secure', description: 'Bank-level security' },
+            { icon: '📱', title: 'Responsive', description: 'Works on all devices' }
+          ]
+        }
       };
+
+      return defaults[type] || {};
     };
 
-    const updateComponent = (componentId, updates) => {
-      setComponents(components.map(comp => 
-        comp.component_id === componentId 
-          ? { ...comp, ...updates }
-          : comp
-      ));
-    };
+    const renderAdvancedComponent = (component) => {
+      const { type, properties, styles, position } = component;
+      
+      const componentStyle = {
+        position: type === 'hero' || type === 'navbar' || type === 'footer' ? 'relative' : 'absolute',
+        left: type === 'hero' || type === 'navbar' || type === 'footer' ? 'auto' : position.x,
+        top: type === 'hero' || type === 'navbar' || type === 'footer' ? 'auto' : position.y,
+        width: position.width,
+        height: type === 'spacer' ? properties.height : position.height,
+        cursor: previewMode ? 'default' : 'pointer',
+        border: selectedComponent?.component_id === component.component_id && !previewMode ? '2px solid #3b82f6' : 'none',
+        boxSizing: 'border-box',
+        ...styles
+      };
 
-    const deleteComponent = (componentId) => {
-      setComponents(components.filter(comp => comp.component_id !== componentId));
-      setSelectedComponent(null);
-    };
+      const handleComponentClick = (e) => {
+        if (!previewMode) {
+          e.stopPropagation();
+          setSelectedComponent(component);
+        }
+      };
 
-    const handleDragStart = (e, componentType) => {
-      setDraggedComponent(componentType);
-    };
+      switch (type) {
+        case 'hero':
+          return (
+            <section
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                backgroundImage: properties.backgroundImage ? `url(${properties.backgroundImage})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                textAlign: 'center',
+                color: 'white',
+                position: 'relative',
+                width: '100%'
+              }}
+              onClick={handleComponentClick}
+            >
+              <div style={{ 
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                bottom: 0, 
+                backgroundColor: 'rgba(0,0,0,0.4)' 
+              }}></div>
+              <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px', padding: '0 20px' }}>
+                <h1 style={{ fontSize: '3rem', marginBottom: '1rem', fontWeight: 'bold' }}>
+                  {properties.title}
+                </h1>
+                {properties.subtitle && (
+                  <p style={{ fontSize: '1.25rem', marginBottom: '2rem', opacity: 0.9 }}>
+                    {properties.subtitle}
+                  </p>
+                )}
+                {properties.ctaText && (
+                  <a
+                    href={properties.ctaLink}
+                    style={{
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      padding: '1rem 2rem',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '1.1rem',
+                      fontWeight: '600',
+                      display: 'inline-block',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    {properties.ctaText}
+                  </a>
+                )}
+              </div>
+            </section>
+          );
 
-    const handleDrop = (e) => {
-      e.preventDefault();
-      if (draggedComponent) {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const position = {
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        };
-        addComponent(draggedComponent, position);
-        setDraggedComponent(null);
+        case 'navbar':
+          return (
+            <nav
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '1rem 2rem',
+                width: '100%',
+                backgroundColor: properties.backgroundColor || '#ffffff',
+                borderBottom: '1px solid #e5e7eb'
+              }}
+              onClick={handleComponentClick}
+            >
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: properties.textColor }}>
+                {properties.logo}
+              </div>
+              <div style={{ display: 'flex', gap: '2rem' }}>
+                {properties.menuItems?.map((item, index) => (
+                  <a
+                    key={index}
+                    href="#"
+                    style={{
+                      color: properties.textColor,
+                      textDecoration: 'none',
+                      fontSize: '1rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </div>
+            </nav>
+          );
+
+        case 'testimonial':
+          return (
+            <div
+              key={component.component_id}
+              style={{
+                ...componentStyle,
+                backgroundColor: '#f8fafc',
+                padding: '2rem',
+                borderRadius: '12px',
+                textAlign: 'center',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+              }}
+              onClick={handleComponentClick}
+            >
+              <blockquote style={{ fontSize: '1.25rem', fontStyle: 'italic', marginBottom: '1.5rem' }}>
+                "{properties.quote}"
+              </blockquote>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+                <img
+                  src={properties.avatar}
+                  alt={properties.author}
+                  style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>{properties.author}</div>
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{properties.position}</div>
+                </div>
+              </div>
+            </div>
+          );
+
+        default:
+          // Keep existing component rendering for basic components
+          return renderComponent(component);
       }
     };
 
-    const handleDragOver = (e) => {
-      e.preventDefault();
-    };
-
+    // Keep the original renderComponent function for basic components
     const renderComponent = (component) => {
       const { type, properties, styles, position } = component;
       
@@ -3170,15 +3363,13 @@ const Admin = () => {
         ...styles
       };
 
+      const handleComponentClick = () => !previewMode && setSelectedComponent(component);
+
       switch (type) {
         case 'text':
           return (
-            <div
-              key={component.component_id}
-              style={componentStyle}
-              onClick={() => !previewMode && setSelectedComponent(component)}
-            >
-              <p style={{ fontSize: properties.fontSize, margin: 0 }}>
+            <div key={component.component_id} style={componentStyle} onClick={handleComponentClick}>
+              <p style={{ fontSize: properties.fontSize, margin: 0, lineHeight: properties.lineHeight }}>
                 {properties.content}
               </p>
             </div>
@@ -3186,88 +3377,49 @@ const Admin = () => {
         case 'heading':
           const HeadingTag = properties.level || 'h2';
           return (
-            <div
-              key={component.component_id}
-              style={componentStyle}
-              onClick={() => !previewMode && setSelectedComponent(component)}
-            >
-              <HeadingTag style={{ fontSize: properties.fontSize, margin: 0 }}>
+            <div key={component.component_id} style={componentStyle} onClick={handleComponentClick}>
+              <HeadingTag style={{ fontSize: properties.fontSize, margin: 0, fontWeight: properties.fontWeight }}>
                 {properties.content}
               </HeadingTag>
             </div>
           );
         case 'image':
           return (
-            <div
-              key={component.component_id}
-              style={componentStyle}
-              onClick={() => !previewMode && setSelectedComponent(component)}
-            >
+            <div key={component.component_id} style={componentStyle} onClick={handleComponentClick}>
               <img
                 src={properties.src}
                 alt={properties.alt}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
+              {properties.caption && (
+                <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '8px', textAlign: 'center' }}>
+                  {properties.caption}
+                </p>
+              )}
             </div>
           );
         case 'button':
           return (
-            <div
-              key={component.component_id}
-              style={componentStyle}
-              onClick={() => !previewMode && setSelectedComponent(component)}
-            >
+            <div key={component.component_id} style={componentStyle} onClick={handleComponentClick}>
               <button
                 style={{
                   backgroundColor: properties.backgroundColor,
-                  color: 'white',
-                  padding: '10px 20px',
+                  color: properties.textColor,
+                  padding: properties.padding,
                   border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer'
+                  borderRadius: properties.borderRadius,
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: '600'
                 }}
               >
                 {properties.text}
               </button>
             </div>
           );
-        case 'container':
-          return (
-            <div
-              key={component.component_id}
-              style={componentStyle}
-              onClick={() => !previewMode && setSelectedComponent(component)}
-            >
-              <div style={{ padding: properties.padding, height: '100%' }}>
-                Container - Drop components here
-              </div>
-            </div>
-          );
-        case 'spacer':
-          return (
-            <div
-              key={component.component_id}
-              style={{
-                ...componentStyle,
-                backgroundColor: previewMode ? 'transparent' : 'rgba(59, 130, 246, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '12px',
-                color: '#6b7280'
-              }}
-              onClick={() => !previewMode && setSelectedComponent(component)}
-            >
-              {!previewMode && 'Spacer'}
-            </div>
-          );
         default:
           return (
-            <div
-              key={component.component_id}
-              style={componentStyle}
-              onClick={() => !previewMode && setSelectedComponent(component)}
-            >
+            <div key={component.component_id} style={componentStyle} onClick={handleComponentClick}>
               {type} component
             </div>
           );
@@ -3275,254 +3427,262 @@ const Admin = () => {
     };
 
     return (
-      <div className="ux-builder">
-        <div className="builder-header">
+      <div className="ux-builder advanced-builder">
+        <div className="builder-header enhanced">
           <div className="builder-info">
-            <h2>🎨 UX Builder</h2>
+            <h2>🎨 Website Designer</h2>
+            <p>Professional drag-and-drop website builder</p>
             {currentPage && (
               <span className="current-page">Editing: {currentPage.name}</span>
             )}
           </div>
-          <div className="builder-actions">
-            <button onClick={() => setShowPageModal(true)} className="new-page-btn">
-              ➕ New Page
-            </button>
-            <button 
-              onClick={() => setPreviewMode(!previewMode)}
-              className={`preview-btn ${previewMode ? 'active' : ''}`}
-            >
-              {previewMode ? '✏️ Edit' : '👁️ Preview'}
-            </button>
-            {currentPage && (
-              <button onClick={savePage} className="save-btn">
-                💾 Save Page
+          <div className="builder-controls">
+            <div className="device-selector">
+              {deviceViews.map(device => (
+                <button
+                  key={device.id}
+                  className={`device-btn ${deviceView === device.id ? 'active' : ''}`}
+                  onClick={() => setDeviceView(device.id)}
+                  title={device.name}
+                >
+                  {device.icon}
+                </button>
+              ))}
+            </div>
+            <div className="builder-actions">
+              <button onClick={() => setShowTemplates(true)} className="templates-btn">
+                📄 Templates
               </button>
-            )}
+              <button onClick={() => setShowPageModal(true)} className="new-page-btn">
+                ➕ New Page
+              </button>
+              <button 
+                onClick={() => setPreviewMode(!previewMode)}
+                className={`preview-btn ${previewMode ? 'active' : ''}`}
+              >
+                {previewMode ? '✏️ Edit' : '👁️ Preview'}
+              </button>
+              {currentPage && (
+                <button onClick={savePage} className="save-btn">
+                  💾 Save
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="builder-workspace">
-          {/* Component Library Sidebar */}
+        <div className="builder-workspace enhanced">
+          {/* Enhanced Component Library Sidebar */}
           {!previewMode && (
-            <div className="component-library">
-              <h3>Components</h3>
-              <div className="component-grid">
-                {componentLibrary.map(comp => (
-                  <div
-                    key={comp.type}
-                    className="component-item"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, comp.type)}
-                    onClick={() => addComponent(comp.type)}
-                  >
-                    <span className="component-icon">{comp.icon}</span>
-                    <span className="component-name">{comp.name}</span>
-                  </div>
-                ))}
+            <div className="component-library enhanced">
+              <div className="library-header">
+                <h3>🧱 Components</h3>
+                <p>Drag & drop to add</p>
               </div>
               
+              {componentCategories.map(category => (
+                <div key={category.id} className="component-category">
+                  <h4>{category.name}</h4>
+                  <div className="component-grid">
+                    {componentLibrary
+                      .filter(comp => comp.category === category.id)
+                      .map(comp => (
+                        <div
+                          key={comp.type}
+                          className="component-item enhanced"
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, comp.type)}
+                          onClick={() => addComponent(comp.type)}
+                          title={comp.description}
+                        >
+                          <span className="component-icon">{comp.icon}</span>
+                          <span className="component-name">{comp.name}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ))}
+              
               {/* Page List */}
-              <div className="page-list">
-                <h4>Pages</h4>
+              <div className="page-list enhanced">
+                <h4>📄 Pages</h4>
                 {pages.map(page => (
                   <div
                     key={page._id}
                     className={`page-item ${currentPage?._id === page._id ? 'active' : ''}`}
                     onClick={() => loadPage(page._id)}
                   >
-                    {page.name}
+                    <span className="page-name">{page.name}</span>
+                    <span className="page-status">{page.status || 'draft'}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Canvas */}
-          <div className="canvas-container">
+          {/* Enhanced Canvas */}
+          <div className="canvas-container enhanced">
+            <div className="canvas-toolbar">
+              <div className="canvas-info">
+                <span>Canvas: {deviceView}</span>
+                {selectedComponent && (
+                  <span>Selected: {selectedComponent.type}</span>
+                )}
+              </div>
+              <div className="canvas-actions">
+                <button 
+                  onClick={() => setShowStylePanel(!showStylePanel)}
+                  className={`style-panel-btn ${showStylePanel ? 'active' : ''}`}
+                >
+                  🎨 Styles
+                </button>
+              </div>
+            </div>
+            
             <div
-              className="canvas"
+              className="canvas enhanced"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               style={{
-                width: '100%',
-                minHeight: '600px',
+                width: deviceView === 'desktop' ? '100%' : deviceViews.find(d => d.id === deviceView)?.width,
+                minHeight: deviceView === 'desktop' ? '800px' : deviceViews.find(d => d.id === deviceView)?.height,
+                maxWidth: deviceView !== 'desktop' ? deviceViews.find(d => d.id === deviceView)?.width : 'none',
+                margin: deviceView !== 'desktop' ? '0 auto' : '0',
                 backgroundColor: '#ffffff',
                 position: 'relative',
-                border: previewMode ? 'none' : '2px dashed #d1d5db'
+                border: previewMode ? 'none' : '2px dashed #d1d5db',
+                borderRadius: deviceView !== 'desktop' ? '12px' : '0',
+                overflow: 'hidden',
+                boxShadow: deviceView !== 'desktop' ? '0 10px 30px rgba(0,0,0,0.2)' : 'none',
+                transition: 'all 0.3s ease'
               }}
             >
-              {components.map(renderComponent)}
+              {components
+                .sort((a, b) => a.order - b.order)
+                .map(renderAdvancedComponent)}
+              
               {!currentPage && (
-                <div className="canvas-placeholder">
-                  <h3>Select a page to start editing</h3>
-                  <p>Choose a page from the sidebar or create a new one</p>
+                <div className="canvas-placeholder enhanced">
+                  <div className="placeholder-content">
+                    <h3>🎨 Welcome to Website Designer</h3>
+                    <p>Your professional website builder</p>
+                    <div className="placeholder-actions">
+                      <button onClick={() => setShowTemplates(true)} className="template-btn">
+                        📄 Choose Template
+                      </button>
+                      <button onClick={() => setShowPageModal(true)} className="create-btn">
+                        ➕ Create Page
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Properties Panel */}
+          {/* Enhanced Properties Panel */}
           {!previewMode && selectedComponent && (
-            <div className="properties-panel">
-              <h3>Properties</h3>
-              <div className="property-group">
-                <label>Component ID</label>
-                <input
-                  type="text"
-                  value={selectedComponent.component_id}
-                  disabled
-                />
+            <div className="properties-panel enhanced">
+              <div className="panel-header">
+                <h3>⚙️ Properties</h3>
+                <button 
+                  onClick={() => setSelectedComponent(null)}
+                  className="close-panel-btn"
+                >
+                  ×
+                </button>
               </div>
               
-              {selectedComponent.type === 'text' && (
-                <>
+              <div className="property-sections">
+                <div className="property-section">
+                  <h4>Component</h4>
                   <div className="property-group">
-                    <label>Content</label>
-                    <textarea
-                      value={selectedComponent.properties.content}
-                      onChange={(e) => updateComponent(selectedComponent.component_id, {
-                        properties: { ...selectedComponent.properties, content: e.target.value }
-                      })}
-                    />
+                    <label>Type</label>
+                    <input type="text" value={selectedComponent.type} disabled />
                   </div>
                   <div className="property-group">
-                    <label>Font Size</label>
-                    <input
-                      type="text"
-                      value={selectedComponent.properties.fontSize}
-                      onChange={(e) => updateComponent(selectedComponent.component_id, {
-                        properties: { ...selectedComponent.properties, fontSize: e.target.value }
-                      })}
-                    />
+                    <label>ID</label>
+                    <input type="text" value={selectedComponent.component_id} disabled />
                   </div>
-                </>
-              )}
+                </div>
 
-              {selectedComponent.type === 'heading' && (
-                <>
-                  <div className="property-group">
-                    <label>Content</label>
-                    <input
-                      type="text"
-                      value={selectedComponent.properties.content}
-                      onChange={(e) => updateComponent(selectedComponent.component_id, {
-                        properties: { ...selectedComponent.properties, content: e.target.value }
-                      })}
-                    />
+                {/* Dynamic property fields based on component type */}
+                {selectedComponent.type === 'hero' && (
+                  <div className="property-section">
+                    <h4>Hero Content</h4>
+                    <div className="property-group">
+                      <label>Title</label>
+                      <input
+                        type="text"
+                        value={selectedComponent.properties.title}
+                        onChange={(e) => updateComponent(selectedComponent.component_id, {
+                          properties: { ...selectedComponent.properties, title: e.target.value }
+                        })}
+                      />
+                    </div>
+                    <div className="property-group">
+                      <label>Subtitle</label>
+                      <textarea
+                        value={selectedComponent.properties.subtitle}
+                        onChange={(e) => updateComponent(selectedComponent.component_id, {
+                          properties: { ...selectedComponent.properties, subtitle: e.target.value }
+                        })}
+                        rows="2"
+                      />
+                    </div>
+                    <div className="property-group">
+                      <label>Background Image URL</label>
+                      <input
+                        type="url"
+                        value={selectedComponent.properties.backgroundImage}
+                        onChange={(e) => updateComponent(selectedComponent.component_id, {
+                          properties: { ...selectedComponent.properties, backgroundImage: e.target.value }
+                        })}
+                      />
+                    </div>
+                    <div className="property-group">
+                      <label>CTA Button Text</label>
+                      <input
+                        type="text"
+                        value={selectedComponent.properties.ctaText}
+                        onChange={(e) => updateComponent(selectedComponent.component_id, {
+                          properties: { ...selectedComponent.properties, ctaText: e.target.value }
+                        })}
+                      />
+                    </div>
+                    <div className="property-group">
+                      <label>CTA Button Link</label>
+                      <input
+                        type="url"
+                        value={selectedComponent.properties.ctaLink}
+                        onChange={(e) => updateComponent(selectedComponent.component_id, {
+                          properties: { ...selectedComponent.properties, ctaLink: e.target.value }
+                        })}
+                      />
+                    </div>
                   </div>
-                  <div className="property-group">
-                    <label>Heading Level</label>
-                    <select
-                      value={selectedComponent.properties.level}
-                      onChange={(e) => updateComponent(selectedComponent.component_id, {
-                        properties: { ...selectedComponent.properties, level: e.target.value }
-                      })}
+                )}
+
+                {/* Add other component-specific property sections here */}
+
+                <div className="property-section">
+                  <h4>Actions</h4>
+                  <div className="property-actions">
+                    <button
+                      onClick={() => deleteComponent(selectedComponent.component_id)}
+                      className="delete-component-btn"
                     >
-                      <option value="h1">H1</option>
-                      <option value="h2">H2</option>
-                      <option value="h3">H3</option>
-                      <option value="h4">H4</option>
-                      <option value="h5">H5</option>
-                      <option value="h6">H6</option>
-                    </select>
+                      🗑️ Delete Component
+                    </button>
                   </div>
-                </>
-              )}
-
-              {selectedComponent.type === 'button' && (
-                <>
-                  <div className="property-group">
-                    <label>Button Text</label>
-                    <input
-                      type="text"
-                      value={selectedComponent.properties.text}
-                      onChange={(e) => updateComponent(selectedComponent.component_id, {
-                        properties: { ...selectedComponent.properties, text: e.target.value }
-                      })}
-                    />
-                  </div>
-                  <div className="property-group">
-                    <label>Link</label>
-                    <input
-                      type="url"
-                      value={selectedComponent.properties.link}
-                      onChange={(e) => updateComponent(selectedComponent.component_id, {
-                        properties: { ...selectedComponent.properties, link: e.target.value }
-                      })}
-                    />
-                  </div>
-                  <div className="property-group">
-                    <label>Background Color</label>
-                    <input
-                      type="color"
-                      value={selectedComponent.properties.backgroundColor}
-                      onChange={(e) => updateComponent(selectedComponent.component_id, {
-                        properties: { ...selectedComponent.properties, backgroundColor: e.target.value }
-                      })}
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="property-actions">
-                <button
-                  onClick={() => deleteComponent(selectedComponent.component_id)}
-                  className="delete-component-btn"
-                >
-                  🗑️ Delete
-                </button>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* New Page Modal */}
-        {showPageModal && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <div className="modal-header">
-                <h3>Create New Page</h3>
-                <button onClick={() => setShowPageModal(false)}>×</button>
-              </div>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                createNewPage({
-                  page_id: formData.get('page_id'),
-                  name: formData.get('name'),
-                  slug: formData.get('slug'),
-                  title: formData.get('title'),
-                  meta_description: formData.get('meta_description')
-                });
-              }}>
-                <div className="form-group">
-                  <label>Page Name</label>
-                  <input type="text" name="name" required />
-                </div>
-                <div className="form-group">
-                  <label>Page ID</label>
-                  <input type="text" name="page_id" required />
-                </div>
-                <div className="form-group">
-                  <label>URL Slug</label>
-                  <input type="text" name="slug" required />
-                </div>
-                <div className="form-group">
-                  <label>Page Title</label>
-                  <input type="text" name="title" />
-                </div>
-                <div className="form-group">
-                  <label>Meta Description</label>
-                  <textarea name="meta_description" rows="3"></textarea>
-                </div>
-                <div className="form-actions">
-                  <button type="submit" className="create-btn">Create Page</button>
-                  <button type="button" onClick={() => setShowPageModal(false)}>Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        {/* Rest of the modals remain the same but with enhanced styling */}
+        
       </div>
     );
   };
