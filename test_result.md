@@ -297,6 +297,138 @@ backend:
         agent: "testing"
         comment: "Get orders API is working correctly. Successfully retrieved the user's orders."
 
+  - task: "Enhanced Product Creation API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Enhanced product creation API is working correctly. Successfully created a product with all new fields (description, weight, min_quantity, max_quantity, etc.)."
+
+  - task: "Individual Product Update API"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "Individual product update API is not working correctly. Failed to update a product with new fields. The endpoint /api/admin/products/{product_id} returned an error."
+
+  - task: "Bulk Product Update API (BEAR-style)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Bulk product update API (BEAR-style) is working correctly. Successfully updated multiple products with new fields using the /api/admin/products/bulk-table endpoint."
+
+  - task: "Traditional Bulk Product Update API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Traditional bulk product update API is working correctly. Successfully updated multiple products using the /api/admin/products/bulk endpoint."
+
+  - task: "E-commerce Settings API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "E-commerce settings API is working correctly. Successfully retrieved and updated e-commerce settings."
+
+  - task: "Delivery Zones Management API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Delivery zones management API is working correctly. Successfully created, retrieved, updated, and deleted delivery zones."
+
+  - task: "Special Offers Management API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Special offers management API is working correctly. Successfully created, retrieved, and deleted special offers."
+
+  - task: "File Upload & Image Management API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "File upload and image management API is working correctly. Successfully uploaded an image and received a data URL."
+
+  - task: "Admin Dashboard Analytics API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Admin dashboard analytics API is working correctly. Successfully retrieved analytics data."
+
+  - task: "User Management API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "User management API is working correctly. Successfully retrieved all users."
+
+  - task: "Email Marketing API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Email marketing API is working correctly. Successfully initiated a bulk email campaign and retrieved email campaign history."
+
 frontend:
   - task: "Enhanced Product Table with More Columns"
     implemented: false
@@ -361,20 +493,24 @@ frontend:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
+    - "Individual Product Update API"
     - "Enhanced Product Table with More Columns"
     - "Improved Editing Interface"
     - "Enhanced Spacing and Layout"
     - "Advanced Color Customization"
     - "New Admin Pages"
-  stuck_tasks: []
-  test_all: true
+  stuck_tasks:
+    - "Individual Product Update API"
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
     message: "User increased budget and wants to proceed with project. Continuing with backend testing and then frontend testing of enhanced admin panel features including more table columns, improved editing interface, enhanced spacing/layout, color customization, and new Frontend Theme page."
+  - agent: "testing"
+    message: "Completed testing of enhanced admin panel backend functionality. Most APIs are working correctly, but the Individual Product Update API is failing. The bulk update APIs (both BEAR-style and traditional) are working correctly. All other admin panel APIs (e-commerce settings, delivery zones, special offers, file upload, analytics, user management, and email marketing) are working correctly."
