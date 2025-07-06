@@ -1180,25 +1180,164 @@
 
 .table-actions {
   display: flex;
-  gap: 5px;
+  gap: 8px;
+  justify-content: center;
 }
 
 .table-actions button {
   background: none;
-  border: none;
-  padding: 8px;
-  border-radius: 5px;
+  border: 2px solid transparent;
+  padding: 10px 12px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+}
+
+.edit-btn {
+  color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
 }
 
 .edit-btn:hover {
-  background: #dbeafe;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-color: #3b82f6;
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.delete-btn {
+  color: #dc2626;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
 }
 
 .delete-btn:hover {
-  background: #fee2e2;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border-color: #dc2626;
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+/* Enhanced Status Badges */
+.status-badge {
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.status-badge.special {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #d97706;
+  border: 2px solid #f59e0b;
+}
+
+.status-badge.special:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.status-badge.normal {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  color: #475569;
+  border: 2px solid #cbd5e1;
+}
+
+.status-badge.normal:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(71, 85, 105, 0.2);
+}
+
+/* Enhanced Management Actions */
+.management-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.bulk-save-btn {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bulk-save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
+  background: linear-gradient(135deg, #047857, #059669);
+}
+
+.bulk-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.bulk-edit-instructions {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 2px solid #93c5fd;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  color: #1e40af;
+  font-weight: 500;
+  text-align: center;
+}
+
+.bulk-edit-instructions p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Enhanced Add Button */
+.add-btn {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-btn:hover {
+  background: linear-gradient(135deg, #047857, #059669);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
 }
 
 /* Enhanced Modal Styles */
