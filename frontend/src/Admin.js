@@ -1952,6 +1952,8 @@ const Admin = () => {
         return <EmailManagement />;
       case 'settings':
         return <EcommerceCustomization />;
+      case 'frontend':
+        return <FrontendThemeCustomization />;
       default:
         return <Dashboard />;
     }
