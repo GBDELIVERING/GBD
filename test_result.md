@@ -490,6 +490,54 @@ frontend:
         agent: "main"
         comment: "Need to add new pages for enhanced functionality and better organization"
 
+  - task: "Slider Management System"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/Admin.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to create dynamic slider management system for homepage sliders with image upload and text overlay capabilities"
+
+  - task: "Dynamic Sections & Elements Management"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/Admin.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to create section management system for dynamic content areas, page builder functionality"
+
+  - task: "Website Maintenance Mode"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to implement maintenance mode toggle with custom maintenance page and admin bypass"
+
+  - task: "WhatsApp Order Integration"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to integrate WhatsApp functionality to send order details directly to WhatsApp for easier order management"
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
