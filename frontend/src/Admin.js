@@ -2364,6 +2364,30 @@ const Admin = () => {
           >
             🎨 Frontend Theme
           </button>
+          <button 
+            className={activeTab === 'sliders' ? 'active' : ''}
+            onClick={() => setActiveTab('sliders')}
+          >
+            🖼️ Slider Management
+          </button>
+          <button 
+            className={activeTab === 'builder' ? 'active' : ''}
+            onClick={() => setActiveTab('builder')}
+          >
+            🏗️ Website Builder
+          </button>
+          <button 
+            className={activeTab === 'maintenance' ? 'active' : ''}
+            onClick={() => setActiveTab('maintenance')}
+          >
+            🔧 Maintenance Mode
+          </button>
+          <button 
+            className={activeTab === 'whatsapp' ? 'active' : ''}
+            onClick={() => setActiveTab('whatsapp')}
+          >
+            📱 WhatsApp Integration
+          </button>
         </nav>
       </div>
 
