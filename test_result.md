@@ -319,7 +319,7 @@ backend:
     status_history:
       - working: false
         agent: "testing"
-        comment: "Individual product update API is not working correctly. Failed to update a product with new fields. The endpoint /api/admin/products/{product_id} returned an error."
+        comment: "Individual product update API is not working correctly. Failed to update a product with new fields. The endpoint /api/admin/products/{product_id} returned a 422 error because it requires the 'category' field to be included in every update request, even when only updating specific fields."
 
   - task: "Bulk Product Update API (BEAR-style)"
     implemented: true
