@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the butchery e-commerce backend API thoroughly. The backend includes authentication, product management, shopping cart, payment integration, and order management."
+user_problem_statement: "Enhance frontend customization in admin panel including: adding more columns to product tables, different editing interface, adding new pages, changing colors, increasing spaces between rows and columns, products hovering effects and size adjustments."
 
 backend:
   - task: "User Registration API"
