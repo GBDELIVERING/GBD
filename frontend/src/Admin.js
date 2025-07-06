@@ -3103,6 +3103,119 @@ const Admin = () => {
     const [deviceView, setDeviceView] = useState('desktop');
     const [showStylePanel, setShowStylePanel] = useState(false);
 
+    // Drag and Drop Functions
+    const handleDragStart = (e, componentType) => {
+      setDraggedComponent(componentType);
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      if (draggedComponent) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const position = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+        addComponent(draggedComponent, position);
+        setDraggedComponent(null);
+      }
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+    };
+
+    // Component Management Functions
+    const addComponent = (componentType, position = { x: 50, y: 50 }) => {
+      const newComponent = {
+        component_id: `comp_${Date.now()}`,
+        type: componentType,
+        properties: getDefaultProperties(componentType),
+        styles: getDefaultStyles(componentType),
+        position: { ...position, width: 300, height: 100 },
+        order: components.length
+      };
+
+      setComponents([...components, newComponent]);
+    };
+
+    const getDefaultStyles = (type) => {
+      return {
+        padding: '10px',
+        margin: '5px',
+        borderRadius: '4px',
+        backgroundColor: type === 'container' ? '#f8fafc' : 'transparent'
+      };
+    };
+
+    const updateComponent = (componentId, updates) => {
+      setComponents(components.map(comp => 
+        comp.component_id === componentId 
+          ? { ...comp, ...updates }
+          : comp
+      ));
+    };
+
+    const deleteComponent = (componentId) => {
+      setComponents(components.filter(comp => comp.component_id !== componentId));
+      setSelectedComponent(null);
+    };
+
+    // Page Management Functions
+    const loadPage = async (pageId) => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/builder/pages/${pageId}`);
+        if (response.ok) {
+          const page = await response.json();
+          setCurrentPage(page);
+          setComponents(page.components || []);
+        }
+      } catch (error) {
+        console.error('Error loading page:', error);
+      }
+    };
+
+    const createNewPage = async (pageData) => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/builder/pages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...pageData,
+            components: []
+          })
+        });
+
+        if (response.ok) {
+          fetchPages();
+          setShowPageModal(false);
+        }
+      } catch (error) {
+        alert('Error creating page');
+      }
+    };
+
+    const savePage = async () => {
+      if (!currentPage) return;
+
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/builder/pages/${currentPage._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...currentPage,
+            components
+          })
+        });
+
+        if (response.ok) {
+          alert('Page saved successfully!');
+        }
+      } catch (error) {
+        alert('Error saving page');
+      }
+    };
+
     const componentLibrary = [
       { type: 'hero', name: 'Hero Section', icon: '🌟', description: 'Main banner section', category: 'sections' },
       { type: 'navbar', name: 'Navigation Bar', icon: '📍', description: 'Site navigation', category: 'sections' },
