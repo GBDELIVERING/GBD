@@ -2259,6 +2259,368 @@ const Admin = () => {
     );
   };
 
+  const WebsiteBuilder = () => {
+    const [sections, setSections] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [editingSection, setEditingSection] = useState(null);
+    const [sectionForm, setSectionForm] = useState({
+      section_id: '',
+      type: 'hero',
+      title: '',
+      content: {},
+      order: 0,
+      active: true
+    });
+
+    const sectionTypes = [
+      { value: 'hero', label: 'Hero Section', description: 'Main banner with title and call-to-action' },
+      { value: 'features', label: 'Features Section', description: 'Showcase product features' },
+      { value: 'about', label: 'About Section', description: 'About us information' },
+      { value: 'testimonials', label: 'Testimonials', description: 'Customer reviews and testimonials' },
+      { value: 'gallery', label: 'Image Gallery', description: 'Photo gallery section' },
+      { value: 'contact', label: 'Contact Section', description: 'Contact information and form' },
+      { value: 'custom', label: 'Custom HTML', description: 'Custom HTML content' }
+    ];
+
+    useEffect(() => {
+      fetchSections();
+    }, []);
+
+    const fetchSections = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/admin/sections`);
+        if (response.ok) {
+          const data = await response.json();
+          setSections(data.sections || []);
+        }
+      } catch (error) {
+        console.error('Error fetching sections:', error);
+      }
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      try {
+        const url = editingSection 
+          ? `${backendUrl}/api/admin/sections/${editingSection._id}`
+          : `${backendUrl}/api/admin/sections`;
+        
+        const method = editingSection ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...sectionForm,
+            order: parseInt(sectionForm.order)
+          })
+        });
+
+        if (response.ok) {
+          alert(editingSection ? 'Section updated successfully!' : 'Section created successfully!');
+          setShowModal(false);
+          setEditingSection(null);
+          resetSectionForm();
+          fetchSections();
+        }
+      } catch (error) {
+        alert('Error saving section');
+      }
+    };
+
+    const resetSectionForm = () => {
+      setSectionForm({
+        section_id: '', type: 'hero', title: '', content: {}, order: 0, active: true
+      });
+    };
+
+    const handleEdit = (section) => {
+      setEditingSection(section);
+      setSectionForm({
+        section_id: section.section_id,
+        type: section.type,
+        title: section.title,
+        content: section.content,
+        order: section.order,
+        active: section.active
+      });
+      setShowModal(true);
+    };
+
+    const handleDelete = async (sectionId) => {
+      if (window.confirm('Are you sure you want to delete this section?')) {
+        try {
+          const response = await fetch(`${backendUrl}/api/admin/sections/${sectionId}`, {
+            method: 'DELETE'
+          });
+          if (response.ok) {
+            alert('Section deleted successfully!');
+            fetchSections();
+          }
+        } catch (error) {
+          alert('Error deleting section');
+        }
+      }
+    };
+
+    const renderContentEditor = () => {
+      const updateContent = (key, value) => {
+        setSectionForm({
+          ...sectionForm,
+          content: { ...sectionForm.content, [key]: value }
+        });
+      };
+
+      switch (sectionForm.type) {
+        case 'hero':
+          return (
+            <div className="content-editor">
+              <h4>Hero Section Content</h4>
+              <div className="form-group">
+                <label>Headline</label>
+                <input
+                  type="text"
+                  value={sectionForm.content.headline || ''}
+                  onChange={(e) => updateContent('headline', e.target.value)}
+                  placeholder="Welcome to our store"
+                />
+              </div>
+              <div className="form-group">
+                <label>Subheadline</label>
+                <input
+                  type="text"
+                  value={sectionForm.content.subheadline || ''}
+                  onChange={(e) => updateContent('subheadline', e.target.value)}
+                  placeholder="Your tagline here"
+                />
+              </div>
+              <div className="form-group">
+                <label>Background Image URL</label>
+                <input
+                  type="url"
+                  value={sectionForm.content.background_image || ''}
+                  onChange={(e) => updateContent('background_image', e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+              <div className="form-group">
+                <label>Call-to-Action Text</label>
+                <input
+                  type="text"
+                  value={sectionForm.content.cta_text || ''}
+                  onChange={(e) => updateContent('cta_text', e.target.value)}
+                  placeholder="Shop Now"
+                />
+              </div>
+              <div className="form-group">
+                <label>Call-to-Action Link</label>
+                <input
+                  type="url"
+                  value={sectionForm.content.cta_link || ''}
+                  onChange={(e) => updateContent('cta_link', e.target.value)}
+                  placeholder="#products"
+                />
+              </div>
+            </div>
+          );
+        case 'features':
+          return (
+            <div className="content-editor">
+              <h4>Features Section Content</h4>
+              <div className="form-group">
+                <label>Features (JSON format)</label>
+                <textarea
+                  value={JSON.stringify(sectionForm.content.features || [], null, 2)}
+                  onChange={(e) => {
+                    try {
+                      updateContent('features', JSON.parse(e.target.value));
+                    } catch (err) {
+                      // Invalid JSON, don't update
+                    }
+                  }}
+                  rows="8"
+                  placeholder='[{"title": "Feature 1", "description": "Description", "icon": "🚀"}]'
+                />
+              </div>
+            </div>
+          );
+        case 'custom':
+          return (
+            <div className="content-editor">
+              <h4>Custom HTML Content</h4>
+              <div className="form-group">
+                <label>HTML Content</label>
+                <textarea
+                  value={sectionForm.content.html || ''}
+                  onChange={(e) => updateContent('html', e.target.value)}
+                  rows="10"
+                  placeholder="<div>Your custom HTML here</div>"
+                />
+              </div>
+            </div>
+          );
+        default:
+          return (
+            <div className="content-editor">
+              <h4>Content (JSON format)</h4>
+              <div className="form-group">
+                <textarea
+                  value={JSON.stringify(sectionForm.content, null, 2)}
+                  onChange={(e) => {
+                    try {
+                      setSectionForm({...sectionForm, content: JSON.parse(e.target.value)});
+                    } catch (err) {
+                      // Invalid JSON, don't update
+                    }
+                  }}
+                  rows="6"
+                  placeholder='{"key": "value"}'
+                />
+              </div>
+            </div>
+          );
+      }
+    };
+
+    return (
+      <div className="website-builder">
+        <div className="management-header">
+          <h2>🏗️ Website Builder</h2>
+          <button 
+            className="add-btn"
+            onClick={() => setShowModal(true)}
+          >
+            ➕ Add New Section
+          </button>
+        </div>
+
+        <div className="sections-list">
+          {sections.map(section => (
+            <div key={section._id} className="section-card">
+              <div className="section-header">
+                <div className="section-info">
+                  <h3>{section.title}</h3>
+                  <div className="section-meta">
+                    <span className="type-badge">{section.type}</span>
+                    <span className="order-badge">Order: {section.order}</span>
+                    <span className={`status-badge ${section.active ? 'active' : 'inactive'}`}>
+                      {section.active ? '✅ Active' : '❌ Inactive'}
+                    </span>
+                  </div>
+                </div>
+                <div className="section-actions">
+                  <button 
+                    onClick={() => handleEdit(section)} 
+                    className="edit-btn"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(section._id)} 
+                    className="delete-btn"
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              </div>
+              <div className="section-preview">
+                <pre>{JSON.stringify(section.content, null, 2)}</pre>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add/Edit Section Modal */}
+        {showModal && (
+          <div className="modal-overlay">
+            <div className="modal large-modal">
+              <div className="modal-header">
+                <h3>{editingSection ? '✏️ Edit Section' : '➕ Add New Section'}</h3>
+                <button onClick={() => {
+                  setShowModal(false);
+                  setEditingSection(null);
+                  resetSectionForm();
+                }}>×</button>
+              </div>
+              <form onSubmit={handleSubmit} className="section-form">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Section ID</label>
+                    <input
+                      type="text"
+                      value={sectionForm.section_id}
+                      onChange={(e) => setSectionForm({...sectionForm, section_id: e.target.value})}
+                      placeholder="hero-section, features-section, etc."
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Section Type</label>
+                    <select
+                      value={sectionForm.type}
+                      onChange={(e) => setSectionForm({...sectionForm, type: e.target.value})}
+                      required
+                    >
+                      {sectionTypes.map(type => (
+                        <option key={type.value} value={type.value}>
+                          {type.label} - {type.description}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Section Title</label>
+                  <input
+                    type="text"
+                    value={sectionForm.title}
+                    onChange={(e) => setSectionForm({...sectionForm, title: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Display Order</label>
+                    <input
+                      type="number"
+                      value={sectionForm.order}
+                      onChange={(e) => setSectionForm({...sectionForm, order: e.target.value})}
+                      min="0"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select
+                      value={sectionForm.active}
+                      onChange={(e) => setSectionForm({...sectionForm, active: e.target.value === 'true'})}
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                {renderContentEditor()}
+
+                <div className="form-actions">
+                  <button type="submit" className="submit-btn">
+                    {editingSection ? '💾 Update Section' : '➕ Create Section'}
+                  </button>
+                  <button type="button" onClick={() => setShowModal(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const FrontendThemeCustomization = () => {
     const [themeSettings, setThemeSettings] = useState({
       primaryColor: '#3b82f6',
