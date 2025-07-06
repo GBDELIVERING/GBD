@@ -187,7 +187,7 @@ class DPOService:
             <Request>createToken</Request>
             <Transaction>
                 <PaymentAmount>{total_amount:.2f}</PaymentAmount>
-                <PaymentCurrency>RWF</PaymentCurrency>
+                <PaymentCurrency>{DPO_CURRENCY}</PaymentCurrency>
                 <CompanyRef>ORDER_{uuid.uuid4().hex[:8]}</CompanyRef>
                 <RedirectURL>{redirect_url}</RedirectURL>
                 <BackURL>{back_url}</BackURL>
