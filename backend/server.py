@@ -597,7 +597,7 @@ async def startup_event():
             {
                 "name": "Premium Beef Ribeye",
                 "description": "Prime cut ribeye steak, perfect for grilling",
-                "price": 25.99,
+                "price": 8500.0,  # RWF
                 "category": "fresh_meat",
                 "image_url": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f",
                 "stock": 20,
@@ -607,7 +607,7 @@ async def startup_event():
             {
                 "name": "Fresh Chicken Breast",
                 "description": "Organic free-range chicken breast",
-                "price": 12.99,
+                "price": 4200.0,  # RWF
                 "category": "fresh_meat",
                 "image_url": "https://images.pexels.com/photos/8353841/pexels-photo-8353841.jpeg",
                 "stock": 35,
@@ -617,7 +617,7 @@ async def startup_event():
             {
                 "name": "Italian Sausages",
                 "description": "Homemade Italian sausages with herbs",
-                "price": 8.99,
+                "price": 2900.0,  # RWF
                 "category": "processed_meat",
                 "image_url": "https://images.pexels.com/photos/6294390/pexels-photo-6294390.jpeg",
                 "stock": 25,
@@ -627,7 +627,7 @@ async def startup_event():
             {
                 "name": "Smoked Bacon",
                 "description": "Thick-cut smoked bacon strips",
-                "price": 6.99,
+                "price": 2300.0,  # RWF
                 "category": "processed_meat",
                 "image_url": "https://images.pexels.com/photos/1327838/pexels-photo-1327838.jpeg",
                 "stock": 30,
@@ -637,7 +637,7 @@ async def startup_event():
             {
                 "name": "Fresh Milk",
                 "description": "Organic whole milk",
-                "price": 3.99,
+                "price": 1300.0,  # RWF
                 "category": "dairy",
                 "image_url": "https://images.pexels.com/photos/6294297/pexels-photo-6294297.jpeg",
                 "stock": 50,
@@ -647,7 +647,7 @@ async def startup_event():
             {
                 "name": "Farm Fresh Eggs",
                 "description": "Free-range chicken eggs",
-                "price": 4.99,
+                "price": 1600.0,  # RWF
                 "category": "dairy",
                 "image_url": "https://images.unsplash.com/photo-1542528180-a1208c5169a5",
                 "stock": 40,
