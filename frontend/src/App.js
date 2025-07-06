@@ -186,47 +186,54 @@ const QuantitySelector = ({ product, onQuantityChange }) => {
   };
 
   return (
-    <div className="quantity-selector p-4 border rounded-lg bg-gray-50">
-      <h4 className="font-semibold mb-3">Select Quantity</h4>
+    <div className="quantity-selector">
+      <h4 className="quantity-title">🛒 Select Your Quantity</h4>
       
-      <div className="flex flex-col space-y-3">
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Quantity:</label>
-          <input
-            type="number"
-            min={product.min_quantity || 1}
-            max={product.max_quantity || 1000}
-            step={product.price_per_unit === 'per_kg' ? 0.25 : 1}
-            value={quantity}
-            onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
-            className="w-24 px-2 py-1 border rounded text-center"
-          />
-          
-          <select
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            className="px-3 py-1 border rounded"
-          >
-            {getAvailableUnits().map(unitOption => (
-              <option key={unitOption.value} value={unitOption.value}>
-                {unitOption.label}
-              </option>
-            ))}
-          </select>
+      <div className="quantity-controls">
+        <div className="quantity-input-group">
+          <label className="quantity-label">Quantity:</label>
+          <div className="input-with-unit">
+            <input
+              type="number"
+              min={product.min_quantity || 1}
+              max={product.max_quantity || 1000}
+              step={product.price_per_unit === 'per_kg' ? 0.25 : 1}
+              value={quantity}
+              onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+              className="quantity-input"
+              placeholder="Enter quantity"
+            />
+            
+            <select
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              className="unit-selector"
+            >
+              {getAvailableUnits().map(unitOption => (
+                <option key={unitOption.value} value={unitOption.value}>
+                  {unitOption.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">
-            Min: {product.min_quantity} | Max: {product.max_quantity || 'No limit'}
-          </span>
-          <span className="font-bold text-red-600">
-            RWF {calculatedPrice.toLocaleString()}
-          </span>
+        <div className="quantity-info">
+          <div className="limits-info">
+            <span className="limit-text">
+              Min: {product.min_quantity} • Max: {product.max_quantity || 'No limit'}
+            </span>
+          </div>
+          <div className="price-display">
+            <span className="calculated-price">
+              Total: RWF {calculatedPrice.toLocaleString()}
+            </span>
+          </div>
         </div>
         
         {product.discount_percentage > 0 && (
-          <div className="text-sm text-green-600">
-            🎉 {product.discount_percentage}% OFF applied!
+          <div className="discount-badge">
+            🎉 {product.discount_percentage}% OFF Applied!
           </div>
         )}
       </div>
