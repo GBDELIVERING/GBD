@@ -1477,6 +1477,8 @@ async def get_public_ecommerce_settings():
         "currency_symbol": settings.get("currency_symbol", "RWF"),
         "enable_delivery": settings.get("enable_delivery", True),
         "enable_pickup": settings.get("enable_pickup", True),
+        "maintenance_mode": settings.get("maintenance_mode", False),
+        "maintenance_message": settings.get("maintenance_message", ""),
         "checkout_fields": settings.get("checkout_fields", {
             "require_phone": True,
             "require_address": True,
