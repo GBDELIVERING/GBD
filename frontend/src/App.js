@@ -647,7 +647,7 @@ const PaymentModal = ({ total, onClose, cartItems }) => {
             disabled={isProcessing || (paymentMethod === 'momo' && !phone)}
             className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            {isProcessing ? 'Processing...' : `Pay ${paymentMethod === 'card' ? `$${cardTotal.toFixed(2)}` : `$${total.toFixed(2)}`}`}
+            {isProcessing ? 'Processing...' : `Pay RWF ${paymentMethod === 'card' ? cardTotal.toLocaleString() : total.toLocaleString()}`}
           </button>
         </div>
       </div>
