@@ -860,35 +860,159 @@ async def get_analytics():
         "top_products": top_products
     }
 
-# Settings Routes
-@app.post("/api/admin/email-settings")
-async def update_email_settings(settings: EmailSettings):
-    """Update email notification settings"""
-    settings_data = settings.dict()
-    settings_data["updated_at"] = datetime.utcnow()
+# Bulk Email Routes
+@app.post("/api/admin/send-bulk-email")
+async def send_bulk_email(request: dict):
+    """Send bulk email to all users or specific groups"""
+    subject = request.get("subject")
+    message = request.get("message")
+    recipient_type = request.get("recipient_type", "all")  # all, customers, admins
     
-    await db.settings.update_one(
-        {"type": "email"},
-        {"$set": settings_data},
-        upsert=True
-    )
+    if not subject or not message:
+        raise HTTPException(status_code=400, detail="Subject and message are required")
     
-    return {"message": "Email settings updated"}
+    # Get recipients based on type
+    query = {}
+    if recipient_type == "customers":
+        query = {"role": {"$ne": "admin"}}
+    elif recipient_type == "admins":
+        query = {"role": "admin"}
+    
+    users = await db.users.find(query).to_list(1000)
+    
+    # Send emails
+    sent_count = 0
+    failed_count = 0
+    
+    for user in users:
+        if user.get("email"):
+            success = await send_email(
+                user["email"],
+                subject,
+                f"""
+                <html>
+                <body>
+                    <h2>Fresh Cuts Market</h2>
+                    <p>Dear {user.get('name', 'Customer')},</p>
+                    <div style="margin: 20px 0;">
+                        {message}
+                    </div>
+                    <p>Best regards,<br/>Fresh Cuts Market Team</p>
+                    <hr>
+                    <p style="font-size: 12px; color: #666;">
+                        This email was sent from Fresh Cuts Market Admin Panel.
+                    </p>
+                </body>
+                </html>
+                """
+            )
+            if success:
+                sent_count += 1
+            else:
+                failed_count += 1
+    
+    # Log email campaign
+    campaign_log = {
+        "subject": subject,
+        "message": message,
+        "recipient_type": recipient_type,
+        "sent_count": sent_count,
+        "failed_count": failed_count,
+        "total_recipients": len(users),
+        "sent_at": datetime.utcnow()
+    }
+    
+    await db.email_campaigns.insert_one(campaign_log)
+    
+    return {
+        "message": f"Email campaign completed",
+        "sent_count": sent_count,
+        "failed_count": failed_count,
+        "total_recipients": len(users)
+    }
 
-@app.get("/api/admin/email-settings")
-async def get_email_settings():
-    """Get email notification settings"""
-    settings = await db.settings.find_one({"type": "email"})
-    if not settings:
-        return {
-            "admin_email": "admin@freshcuts.rw",
-            "notify_new_orders": True,
-            "notify_low_stock": True,
-            "low_stock_threshold": 10
-        }
+@app.post("/api/admin/send-custom-email")
+async def send_custom_email(request: dict):
+    """Send custom email to specific users"""
+    subject = request.get("subject")
+    message = request.get("message")
+    recipient_emails = request.get("recipient_emails", [])
     
-    settings.pop("_id", None)
-    return settings
+    if not subject or not message or not recipient_emails:
+        raise HTTPException(status_code=400, detail="Subject, message, and recipient emails are required")
+    
+    sent_count = 0
+    failed_count = 0
+    
+    for email in recipient_emails:
+        # Get user info for personalization
+        user = await db.users.find_one({"email": email})
+        user_name = user.get("name", "Customer") if user else "Customer"
+        
+        success = await send_email(
+            email,
+            subject,
+            f"""
+            <html>
+            <body>
+                <h2>Fresh Cuts Market</h2>
+                <p>Dear {user_name},</p>
+                <div style="margin: 20px 0;">
+                    {message}
+                </div>
+                <p>Best regards,<br/>Fresh Cuts Market Team</p>
+                <hr>
+                <p style="font-size: 12px; color: #666;">
+                    This email was sent from Fresh Cuts Market Admin Panel.
+                </p>
+            </body>
+            </html>
+            """
+        )
+        if success:
+            sent_count += 1
+        else:
+            failed_count += 1
+    
+    # Log custom email
+    custom_log = {
+        "subject": subject,
+        "message": message,
+        "recipient_emails": recipient_emails,
+        "sent_count": sent_count,
+        "failed_count": failed_count,
+        "total_recipients": len(recipient_emails),
+        "sent_at": datetime.utcnow()
+    }
+    
+    await db.custom_emails.insert_one(custom_log)
+    
+    return {
+        "message": f"Custom email campaign completed",
+        "sent_count": sent_count,
+        "failed_count": failed_count,
+        "total_recipients": len(recipient_emails)
+    }
+
+@app.get("/api/admin/email-campaigns")
+async def get_email_campaigns():
+    """Get email campaign history"""
+    campaigns = await db.email_campaigns.find({}).sort("sent_at", -1).to_list(100)
+    custom_emails = await db.custom_emails.find({}).sort("sent_at", -1).to_list(100)
+    
+    for campaign in campaigns:
+        campaign["_id"] = str(campaign["_id"])
+        campaign["type"] = "bulk"
+    
+    for email in custom_emails:
+        email["_id"] = str(email["_id"])
+        email["type"] = "custom"
+    
+    # Combine and sort by date
+    all_campaigns = campaigns + custom_emails
+    all_campaigns.sort(key=lambda x: x["sent_at"], reverse=True)
+    
+    return {"campaigns": all_campaigns}
 
 # Initialize sample data
 @app.on_event("startup")
