@@ -525,6 +525,26 @@ const Admin = () => {
                     </td>
                     <td>
                       {product.isEditing ? (
+                        <textarea
+                          value={product.description || ''}
+                          onChange={(e) => updateProductField(product._id, 'description', e.target.value)}
+                          className="table-input"
+                          placeholder="Product description..."
+                          rows="2"
+                          style={{minHeight: '60px', resize: 'vertical'}}
+                        />
+                      ) : (
+                        <span className="product-description" title={product.description}>
+                          {product.description ? 
+                            (product.description.length > 50 ? 
+                              product.description.substring(0, 50) + '...' : 
+                              product.description) : 
+                            'No description'}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {product.isEditing ? (
                         <select
                           value={product.category}
                           onChange={(e) => updateProductField(product._id, 'category', e.target.value)}
@@ -567,7 +587,65 @@ const Admin = () => {
                       )}
                     </td>
                     <td>
-                      <span className="unit-badge">{product.unit}</span>
+                      {product.isEditing ? (
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={product.weight || ''}
+                          onChange={(e) => updateProductField(product._id, 'weight', parseFloat(e.target.value) || null)}
+                          className="table-input"
+                          placeholder="0.00"
+                        />
+                      ) : (
+                        <span className="weight-display">
+                          {product.weight ? `${product.weight} kg` : 'N/A'}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {product.isEditing ? (
+                        <input
+                          type="text"
+                          value={product.unit || ''}
+                          onChange={(e) => updateProductField(product._id, 'unit', e.target.value)}
+                          className="table-input"
+                          placeholder="Unit type..."
+                        />
+                      ) : (
+                        <span className="unit-badge">{product.unit || 'N/A'}</span>
+                      )}
+                    </td>
+                    <td>
+                      {product.isEditing ? (
+                        <input
+                          type="number"
+                          step="0.25"
+                          value={product.min_quantity || ''}
+                          onChange={(e) => updateProductField(product._id, 'min_quantity', parseFloat(e.target.value) || null)}
+                          className="table-input"
+                          placeholder="1"
+                        />
+                      ) : (
+                        <span className="quantity-display">
+                          {product.min_quantity || '1'}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {product.isEditing ? (
+                        <input
+                          type="number"
+                          step="0.25"
+                          value={product.max_quantity || ''}
+                          onChange={(e) => updateProductField(product._id, 'max_quantity', parseFloat(e.target.value) || null)}
+                          className="table-input"
+                          placeholder="No limit"
+                        />
+                      ) : (
+                        <span className="quantity-display">
+                          {product.max_quantity || 'No limit'}
+                        </span>
+                      )}
                     </td>
                     <td>
                       {product.isEditing ? (
@@ -582,6 +660,21 @@ const Admin = () => {
                         />
                       ) : (
                         <span className="discount-display">{product.discount_percentage}%</span>
+                      )}
+                    </td>
+                    <td>
+                      {product.isEditing ? (
+                        <input
+                          type="text"
+                          value={product.sku || ''}
+                          onChange={(e) => updateProductField(product._id, 'sku', e.target.value)}
+                          className="table-input"
+                          placeholder="SKU..."
+                        />
+                      ) : (
+                        <span className="sku-display">
+                          {product.sku || 'No SKU'}
+                        </span>
                       )}
                     </td>
                     <td>
