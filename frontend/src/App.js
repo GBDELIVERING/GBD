@@ -150,7 +150,7 @@ const ProductCard = ({ product, onAddToCart }) => {
         <p className="text-gray-600 text-sm mb-3">{product.description}</p>
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-2xl font-bold text-red-600">${product.price}</span>
+            <span className="text-2xl font-bold text-red-600">RWF {product.price.toLocaleString()}</span>
             <span className="text-gray-500 ml-1">/{product.unit}</span>
           </div>
           <button 
