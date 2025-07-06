@@ -26,6 +26,9 @@ load_dotenv()
 
 app = FastAPI(title="Butchery E-commerce API", version="1.0.0")
 
+# Add session middleware for OAuth
+app.add_middleware(SessionMiddleware, secret_key="your-secret-key-change-in-production")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -33,6 +36,20 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# OAuth setup
+oauth = OAuth()
+
+# Google OAuth (if using traditional method)
+oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID', 'your-google-client-id'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET', 'your-google-client-secret'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
 )
 
 # Security
