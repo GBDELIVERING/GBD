@@ -351,26 +351,29 @@ const Admin = () => {
         let successCount = 0;
         let errorCount = 0;
 
-        // Update each product individually
+        // Update each product individually using PATCH for partial updates
         for (const product of editedProducts) {
           try {
+            // Only send fields that have been modified
+            const updateData = {};
+            if (product.name) updateData.name = product.name;
+            if (product.description) updateData.description = product.description;
+            if (product.price) updateData.price = parseFloat(product.price);
+            if (product.category) updateData.category = product.category;
+            if (product.stock !== undefined) updateData.stock = parseInt(product.stock);
+            if (product.unit) updateData.unit = product.unit;
+            if (product.discount_percentage !== undefined) updateData.discount_percentage = parseFloat(product.discount_percentage);
+            if (product.min_quantity) updateData.min_quantity = parseFloat(product.min_quantity);
+            if (product.max_quantity) updateData.max_quantity = parseFloat(product.max_quantity);
+            if (product.price_per_unit) updateData.price_per_unit = product.price_per_unit;
+            if (product.image_url) updateData.image_url = product.image_url;
+            if (product.weight) updateData.weight = parseFloat(product.weight);
+            if (product.sku) updateData.sku = product.sku;
+
             const response = await fetch(`${backendUrl}/api/admin/products/${product._id}`, {
-              method: 'PUT',
+              method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                name: product.name,
-                description: product.description,
-                price: parseFloat(product.price),
-                category: product.category,
-                stock: parseInt(product.stock),
-                unit: product.unit,
-                discount_percentage: parseFloat(product.discount_percentage),
-                min_quantity: parseFloat(product.min_quantity || 1),
-                max_quantity: product.max_quantity ? parseFloat(product.max_quantity) : null,
-                price_per_unit: product.price_per_unit,
-                image_url: product.image_url,
-                weight: product.weight ? parseFloat(product.weight) : null
-              })
+              body: JSON.stringify(updateData)
             });
 
             if (response.ok) {
